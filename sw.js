@@ -2,8 +2,8 @@
 // away, with the cached copy as a fallback when there's no signal. This folder's icons are cache-first.
 // Supabase requests and anything that isn't a GET are never touched, and neither is any page outside this
 // folder: the Dock links to ../todo/, ../calories/ and ../planner/, which belong to other apps.
-const CACHE = 'home-v1';
-const SHELL = ['./', './index.html', './manifest.webmanifest',
+const CACHE = 'home-v3';   // bumped when the dashboard replaced the three widgets (same file list)
+const SHELL = ['./', './index.html', './back.js', './manifest.webmanifest',
   './icons/home-icon-192.png', './icons/home-icon-512.png', './icons/home-apple-touch-icon.png', './icons/home-favicon-32.png',
   './icons/todo.png', './icons/calories.png', './icons/planner.png'];
 
@@ -24,6 +24,11 @@ self.addEventListener('fetch', e => {
       if (res.ok) { const copy = res.clone(); caches.open(CACHE).then(c => c.put('./index.html', copy)); }
       return res;
     }).catch(() => caches.match('./index.html')));
+    return;
+  }
+
+  if (url.pathname === new URL('./back.js', self.registration.scope).pathname) {   // shared with the other apps: network-first, cached copy offline
+    e.respondWith(fetch(req).then(res => { if (res.ok) { const copy = res.clone(); caches.open(CACHE).then(c => c.put(req, copy)); } return res; }).catch(() => caches.match(req)));
     return;
   }
 

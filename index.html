@@ -6,6 +6,7 @@
 <meta name="theme-color" content="#7f9cc3" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#070b1a" media="(prefers-color-scheme: dark)">
 <title>Home</title>
+<script src="back.js"></script>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/home-favicon-32.png">
 <link rel="apple-touch-icon" sizes="180x180" href="icons/home-apple-touch-icon.png">
@@ -15,10 +16,15 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
 /* ============================================================
-   Home — macOS Tahoe 26 desktop (from the tahoe-design starter)
-   Tokens, base, rim and wallpaper are the starter's, unchanged;
-   then widgets, Dock, responsive, fallbacks.
+   Home dashboard: macOS Tahoe look (tahoe-design skill)
+   Tokens (skill tokens.css), base, wallpaper, panels, Dock,
+   layouts (desktop fit, tablet, phone), fallbacks.
    ============================================================ */
+
+/* Tahoe design tokens, taken from the shipped To Do app (4 Nov 2026). Light first, dark below.
+   The --c-* list colours are that app's: swap them for your own sections. Every text colour here passes
+   4.5:1 on its glass; check again if you change a background. */
+
 :root {
   color-scheme: light dark;
   --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
@@ -86,7 +92,7 @@
   --tile-bg: linear-gradient(160deg, rgba(0, 62, 170, .74), rgba(0, 54, 156, .78));
   --tile-text: #fff;
   --tile-sub: #e0edff;
-  --tile-warn: #ffbfba;   /* salmon, ~4.6:1 on the light-mode deep-blue tile glass (#ffaaa4 as in dark only reaches ~3.9) */
+  --tile-warn: #ffe6e3;
   --tile-tick: rgba(255, 255, 255, .20);
 
   /* Control Center */
@@ -190,28 +196,55 @@
   }
 }
 
+/* ---------- dashboard tokens (on top of the skill's) ---------- */
+:root {
+  --panel-shadow: 0 14px 36px rgba(12, 36, 92, .16), 0 1px 4px rgba(12, 36, 92, .08);
+  --ev-bg: rgba(255, 255, 255, .7);
+  --ev-past-bg: rgba(255, 255, 255, .38);
+  --next-bg: color-mix(in srgb, var(--accent) 80%, #000);   /* white text 4.5:1+ (raw #007aff is 4.0:1) */
+  --ring-track: rgba(0, 0, 0, .09);
+  --chip-bg: rgba(255, 255, 255, .55);
+  --c-social: #ff2d55;
+  --hdr-glow: 0 0 14px rgba(255, 255, 255, .45);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --panel-shadow: 0 14px 36px rgba(0, 0, 0, .38), 0 1px 4px rgba(0, 0, 0, .22);
+    --ev-bg: rgba(62, 66, 88, .82);
+    --ev-past-bg: rgba(46, 49, 66, .72);
+    --next-bg: color-mix(in srgb, var(--accent) 74%, #000);
+    --ring-track: rgba(255, 255, 255, .12);
+    --chip-bg: rgba(255, 255, 255, .10);
+    --c-social: #ff4f74;
+    --hdr-glow: 0 0 14px rgba(0, 0, 0, .35);
+  }
+}
+
 /* ---------- base ---------- */
 *, *::before, *::after { box-sizing: border-box; }
-html, body { margin: 0; height: 100%; }
+html, body { margin: 0; }
+html { background: var(--wp-base); -webkit-text-size-adjust: 100%; }
 body {
+  min-height: 100vh; min-height: 100dvh;
   font-family: var(--font);
   font-size: 13px;
   line-height: 1.25;
   color: var(--text-1);
   background: var(--wp-base);
   -webkit-font-smoothing: antialiased;
-  overflow: hidden;
+  overflow-x: hidden;
 }
-button, input { font: inherit; color: inherit; }
-button { background: none; border: 0; padding: 0; cursor: default; }
-input { border: 0; outline: 0; background: transparent; padding: 0; min-width: 0; }
+a { color: inherit; text-decoration: none; -webkit-tap-highlight-color: transparent; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: default; }
+ul, ol { list-style: none; margin: 0; padding: 0; }
+h1, h2, h3, p { margin: 0; }
 svg.ic { width: 1em; height: 1em; display: block; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex: none; }
-svg.ic--fill { fill: currentColor; stroke: none; }
 .sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
-.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .num { font-variant-numeric: tabular-nums; }
+.ell { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 
-/* shared Liquid Glass rim: bright top-left and bottom-right, dim sides */
+/* shared Liquid Glass rim: bright top-left and bottom-right, dim sides (from the starter) */
 .rim { position: relative; }
 .rim::after {
   content: "";
@@ -227,7 +260,7 @@ svg.ic--fill { fill: currentColor; stroke: none; }
   z-index: 3;
 }
 
-/* ---------- wallpaper ---------- */
+/* ---------- wallpaper (from the starter) ---------- */
 .wallpaper { position: fixed; inset: 0; z-index: 0; overflow: hidden; }
 .wallpaper svg { width: 100%; height: 100%; display: block; }
 .wp-s1 { stop-color: var(--wp-sky-1); }
@@ -247,151 +280,81 @@ svg.ic--fill { fill: currentColor; stroke: none; }
 .wp-crest { stroke: var(--wp-crest); fill: none; }
 .wp-streak { stroke: var(--wp-streak); fill: none; }
 .wp-lip { stroke: var(--wp-lip-1); fill: none; }
-/* Static glass (see glass in the script): the SVG above is drawn once into this canvas, then hidden, so its
-   blurs never re-render. Cover + centre is the SVG's xMidYMid slice. */
 .wallpaper__raster { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: cover; object-position: 50% 50%; }
-/* Still glass gets its blurred backdrop baked by the glass script (same recipe as the starter's Control Center
-   modules and Dock); Safari and phones keep the live backdrop-filter. */
-.w:is(.is-baking, .is-baked) { background: var(--cc-bg), var(--baked) 0 0 / 100% 100% no-repeat; }
-.datepill:is(.is-baking, .is-baked) { background: var(--cc-label-bg), var(--baked) 0 0 / 100% 100% no-repeat; }
+.wallpaper.is-raster svg { display: none; }
+
+/* baked glass (see the glass script): still glass on the desktop layout gets its blur as an image */
+.panel:is(.is-baking, .is-baked) { background: linear-gradient(var(--sheet-bg), var(--sheet-bg)), var(--baked) 0 0 / 100% 100% no-repeat; }
+.acct:is(.is-baking, .is-baked) { background: linear-gradient(var(--round-bg), var(--round-bg)), var(--baked) 0 0 / 100% 100% no-repeat; }
 .dock:is(.is-baking, .is-baked) { background: linear-gradient(var(--dock-bg), var(--dock-bg)), var(--baked) 0 0 / 100% 100% no-repeat; }
-:is(.w, .datepill, .dock).is-baked { -webkit-backdrop-filter: none; backdrop-filter: none; }
+:is(.panel, .acct, .dock).is-baked { -webkit-backdrop-filter: none; backdrop-filter: none; }
 
-/* ---------- desktop layout: a widget grid anchored to the top-left corner (refs 9, 15), Dock below ----------
-   Four square cells by two: To Do and Planner are wide 2:1 widgets stacked on the left, Calories a large square
-   beside them (ref 6's mix of wide and square modules). Cells grow with the window to about two thirds of its width or a little more. */
+/* ---------- page frame ---------- */
 .desktop {
-  position: relative; z-index: 1; height: 100vh; height: 100dvh;
-  --top-gap: 36px;                                   /* wallpaper above the date */
-  --dock-clear: 100px;                               /* Dock (6px off the bottom, 68px tall) plus a 26px gap */
-  --edge: clamp(28px, 3vw, 48px);                    /* wallpaper left of the grid, like desktop widgets */
-  --gap: 20px;
-  /* one grid cell, never so big that two rows run into the Dock */
-  --u: min(224px, calc((100vw - 2 * var(--edge) - 3 * var(--gap)) * .19), calc((100vh - var(--top-gap) - var(--dock-clear) - 50px - var(--gap)) / 2));
-  --w: calc(2 * var(--u) + var(--gap));              /* a large widget's side, for the type scale */
-  display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start;
-  padding: var(--top-gap) var(--edge) var(--dock-clear);
-}
-.stage { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
-
-/* the date: a small glass pill on bare wallpaper, like the starter's Control Center labels (4.5:1 over the crest) */
-.datepill {
-  align-self: flex-start;
-  margin: 0 0 0 4px;
-  height: 32px;
-  padding: 0 14px;
-  border-radius: 999px;
-  display: inline-flex; align-items: center;
-  font-size: 15px; font-weight: 600; letter-spacing: -.005em;
-  color: var(--cc-text);
-  background: var(--cc-label-bg);
-  -webkit-backdrop-filter: blur(16px) saturate(190%) brightness(.68);
-  backdrop-filter: blur(16px) saturate(190%) brightness(.68);
-  box-shadow: var(--cc-shadow);
+  --edge: 32px;
+  --gap: 16px;
+  --dock-clear: calc(100px + env(safe-area-inset-bottom));   /* Dock (6px off the bottom, 68px tall) plus a 26px gap */
+  position: relative; z-index: 1;
+  max-width: 1720px;
+  margin: 0 auto;
+  display: flex; flex-direction: column; gap: var(--gap);
+  padding: calc(22px + env(safe-area-inset-top)) calc(var(--edge) + env(safe-area-inset-right)) var(--dock-clear) calc(var(--edge) + env(safe-area-inset-left));
 }
 
-/* ---------- widgets (refs 2, 6, 9, 15): deep blue Control Center glass, white text, the whole tile is the link ---------- */
-.widgets { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, var(--u)); grid-template-rows: repeat(2, var(--u)); gap: var(--gap); }
-.widgets > li { display: flex; min-width: 0; }
-/* row by row this reads To Do, Calories, Planner: the same order as the markup and the Dock */
-.widgets > .pos-todo { grid-column: 1 / span 2; grid-row: 1; }
-.widgets > .pos-cal { grid-column: 3 / span 2; grid-row: 1 / span 2; }
-.widgets > .pos-plan { grid-column: 1 / span 2; grid-row: 2; }
-.w {
-  flex: 1; min-width: 0;
+/* header row: small greeting, large day and date, account button (refs 4, 5, 8) */
+.hdr { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; padding: 0 4px; }
+.hdr__hello { font-size: 15px; font-weight: 600; color: var(--text-1); text-shadow: var(--hdr-glow); }
+.hdr__date { margin-top: 2px; font-size: 34px; font-weight: 700; letter-spacing: -0.022em; line-height: 1.1; text-shadow: var(--hdr-glow); }
+.acct {
+  position: relative;
+  width: 40px; height: 40px; flex: none;
+  display: grid; place-items: center;
+  border-radius: 50%;
+  font-size: 16px; font-weight: 600; color: var(--text-1);
+  background: var(--round-bg);
+  -webkit-backdrop-filter: blur(24px) saturate(170%);
+  backdrop-filter: blur(24px) saturate(170%);
+  box-shadow: 0 4px 14px rgba(12, 36, 92, .14), inset 0 .5px 0 rgba(255,255,255,.5);
+  transition: transform 140ms var(--ease-snap);
+}
+.acct::before { content: ""; position: absolute; inset: -4px; border-radius: 50%; }   /* 48px hit area */
+.acct:active { transform: scale(.96); }
+
+/* ---------- the board ---------- */
+.board { display: grid; gap: var(--gap); min-height: 0; }
+
+/* a panel: one glass widget, the whole thing a link to its app */
+.panel {
+  position: relative;
   display: flex; flex-direction: column;
-  padding: 20px 22px 22px;
-  border-radius: 32px;
-  color: var(--cc-text);
-  text-decoration: none;
-  background: var(--cc-bg);
-  /* the --cc-blur recipe written out: a custom property here has left Safari's glass flat before */
-  -webkit-backdrop-filter: blur(16px) saturate(190%) brightness(.68);
-  backdrop-filter: blur(16px) saturate(190%) brightness(.68);
-  box-shadow: var(--cc-shadow), inset 0 0 16px rgba(255,255,255,.14);
+  min-width: 0; min-height: 0;
+  padding: 14px 16px 16px;
+  border-radius: 24px;
+  overflow: hidden;
+  background: var(--sheet-bg);
+  -webkit-backdrop-filter: blur(34px) saturate(165%);
+  backdrop-filter: blur(34px) saturate(165%);
+  box-shadow: var(--panel-shadow), inset 0 0 0 .5px rgba(255,255,255,.18);
   transition: transform 160ms var(--ease-snap);
-  -webkit-tap-highlight-color: transparent;
-  -webkit-touch-callout: none;
 }
-.w:active { transform: scale(.98); }
-.w:focus-visible { outline-offset: 4px; }
-.w.rim::after { padding: 1.2px; background: linear-gradient(135deg, rgba(255,255,255,.95) 0%, rgba(255,255,255,.35) 26%, rgba(255,255,255,.10) 50%, rgba(255,255,255,.35) 74%, rgba(255,255,255,.9) 100%); }
+.panel:active { transform: scale(.992); }
+.panel:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 75%, transparent); outline-offset: 3px; }
 
-.w__head { display: flex; align-items: center; gap: 10px; height: 30px; flex: none; }
-.w__icon { width: 30px; height: 30px; flex: none; border-radius: 7.5px; display: block; box-shadow: 0 1px 3px rgba(0, 0, 0, .28); }
-.w__name { font-size: 15px; font-weight: 600; white-space: nowrap; }
-.w__data { flex: 1; min-height: 0; display: flex; flex-direction: column; margin-top: 14px; }
-.w__line { border-top: .5px solid rgba(255,255,255,.24); }
+/* widget head: app icon and name, a chevron that says "opens the app" */
+.phead { display: flex; align-items: center; gap: 7px; height: 22px; flex: none; color: var(--text-2); font-size: 13px; font-weight: 600; }
+.phead__icon { width: 20px; height: 20px; border-radius: 5px; flex: none; box-shadow: 0 1px 2px rgba(0,0,0,.18); }
+.phead__name { flex: 1; min-width: 0; }
+.phead .ic { font-size: 15px; stroke-width: 2; }
+.ptitle { margin-top: 10px; display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.ptitle h2 { font-size: 22px; font-weight: 700; letter-spacing: -0.015em; }
+.ptitle__sub { font-size: 13px; color: var(--text-2); white-space: nowrap; }
+.ptitle__sub b { font-weight: 600; color: var(--red-text); }
 
-/* the day's number, big */
-.big { display: flex; align-items: baseline; gap: 10px; }
-.big__num { font-size: clamp(56px, calc(var(--w) * .19), 76px); font-weight: 600; line-height: .95; letter-spacing: -.035em; font-variant-numeric: tabular-nums; }
-.big__unit { font-size: 17px; font-weight: 600; color: var(--cc-text-2); }
-.w__note { margin-top: 8px; font-size: 13px; font-weight: 600; color: var(--tile-warn); }
-
-/* wide 2:1 widgets (To Do, Planner): a little tighter, the number left and its picture right */
-.w--wide { padding: 18px 20px 20px; }
-.w--wide .w__data { margin-top: 12px; display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 22px; align-content: center; }
-.w--wide .big { flex-direction: column; align-items: flex-start; gap: 4px; }
-.w--wide .big__num { font-size: 52px; }
-.w--wide .big__unit { font-size: 15px; }
-.w--plan .big { flex-direction: row; align-items: baseline; gap: 10px; }   /* on the Mac: one line, so the day strip fits below */
-
-/* To Do: today's tasks as a row of slots (done filled with a tick, overdue ringed with a !, the rest still open),
-   so done vs left vs late is the picture; the count is what's left */
-.slots { display: flex; gap: 6px; height: 60px; }
-.slot { flex: 1; min-width: 0; border-radius: 12px; display: grid; place-items: center; font-size: 28px;
-  background: var(--cc-off); box-shadow: inset 0 0 0 .5px rgba(255,255,255,.3), inset 0 .5px 0 rgba(255,255,255,.35); }
-.slot .ic { stroke-width: 2.6; }
-.slot--done { background: var(--cc-on); color: var(--cc-on-fg); box-shadow: none; }
-.slot--late { background: rgba(255,255,255,.08); color: var(--tile-warn); box-shadow: inset 0 0 0 2px var(--tile-warn); }
-.slots__key { display: block; margin-top: 9px; font-size: 13px; font-weight: 500; color: var(--cc-text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.slots__late { font-weight: 600; color: var(--tile-warn); }
-
-/* Calories: a ring is the picture (ref 10's gauges, the starter's .cc-ring at widget size) */
-.cal__ring { position: relative; width: 56%; aspect-ratio: 1; align-self: center; margin: auto 0; }
-.cal__ring svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; transform: rotate(-90deg); }
-.cal__track { fill: none; stroke: var(--cc-track); stroke-width: 12; }
-.cal__fill { fill: none; stroke: var(--cc-on); stroke-width: 12; stroke-linecap: round; }
-.cal__mid { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-.cal__num { font-size: clamp(34px, calc(var(--w) * .11), 44px); font-weight: 600; line-height: 1; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
-.cal__unit { margin-top: 5px; font-size: 13px; font-weight: 500; color: var(--cc-text-2); }
-.cal__stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding-top: 12px; }
-.stat__v { font-size: 20px; font-weight: 600; letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
-.stat__k { margin-top: 2px; font-size: 13px; font-weight: 500; color: var(--cc-text-2); }
-
-/* Planner: the count, the day as a strip (events as blocks, a now line), then the next event */
-.day { grid-column: 1 / -1; grid-row: 2; padding-top: 14px; }
-.day__track { position: relative; height: 34px; border-radius: 10px; background: rgba(255,255,255,.14); box-shadow: inset 0 0 0 .5px rgba(255,255,255,.2); }
-.day__ev { position: absolute; top: 5px; bottom: 5px; left: calc(var(--s) * 100%); width: calc((var(--e) - var(--s)) * 100%); border-radius: 6px; background: rgba(255,255,255,.6); }
-.day__ev--past { background: rgba(255,255,255,.3); }
-.day__ev--next { background: var(--cc-on); }
-.day__now { position: absolute; top: -4px; bottom: -4px; left: calc(var(--t) * 100%); width: 2px; margin-left: -1px; border-radius: 1px; background: var(--tile-warn); }
-.day__now::before { content: ""; position: absolute; left: 50%; top: -3px; width: 8px; height: 8px; margin-left: -4px; border-radius: 50%; background: var(--tile-warn); }
-.day__hours { position: relative; height: 15px; margin-top: 7px; font-size: 11px; font-weight: 500; color: var(--cc-text-2); font-variant-numeric: tabular-nums; }
-.day__hours span { position: absolute; left: calc(var(--t) * 100%); transform: translateX(-50%); }
-.next { grid-column: 2; grid-row: 1; align-self: center; border-top: 0; display: grid; grid-template-columns: 4px minmax(0, 1fr); column-gap: 12px; }
-.next::before { content: ""; grid-row: 1 / span 3; border-radius: 2px; background: var(--cc-on); }
-.next__when { font-size: 13px; font-weight: 600; color: var(--cc-text-2); }
-.next__title { margin-top: 2px; font-size: 17px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.next__place { margin-top: 1px; font-size: 13px; font-weight: 500; color: var(--cc-text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-/* signed out (hook for later): body[data-auth="signed-out"] swaps each tile's data for one quiet line */
-.w__out { display: none; margin-top: auto; font-size: 15px; font-weight: 500; color: var(--cc-text-2); }
-[data-auth="signed-out"] .w__data, [data-auth="signed-out"] .dock__badge { display: none; }
-[data-auth="signed-out"] .w__out { display: block; }
-
-@media (prefers-color-scheme: dark) {
-  .w, .datepill { -webkit-backdrop-filter: blur(16px) saturate(190%); backdrop-filter: blur(16px) saturate(190%); }
-  .w.rim::after { background: linear-gradient(135deg, rgba(255,255,255,.45) 0%, rgba(255,255,255,.12) 26%, rgba(255,255,255,.04) 50%, rgba(255,255,255,.12) 74%, rgba(255,255,255,.4) 100%); }
-  .w__line { border-color: rgba(255,255,255,.14); }
-}
-
-/* ---------- Dock (refs 9, 10, 11, 12): the three apps, real links ---------- */
+/* ---------- Dock (refs 9-12 in the starter) ---------- */
 .dock {
   position: fixed;
   left: 50%;
-  bottom: calc(6px + env(safe-area-inset-bottom, 0px));
+  bottom: calc(6px + env(safe-area-inset-bottom));
   z-index: 15;
   transform: translateX(-50%);
   display: flex; align-items: center; gap: 9px;
@@ -401,139 +364,294 @@ svg.ic--fill { fill: currentColor; stroke: none; }
   -webkit-backdrop-filter: blur(24px) saturate(180%);
   backdrop-filter: blur(24px) saturate(180%);
   box-shadow: 0 10px 30px rgba(10, 30, 80, .18), inset 0 1px 0 rgba(255,255,255,.35);
-  list-style: none;
-  margin: 0;
 }
 .dock__item { position: relative; }
-.dock__btn { display: block; position: relative; transition: transform 200ms var(--ease-snap); -webkit-tap-highlight-color: transparent; }
-@media (hover: hover) { .dock__btn:hover { transform: translateY(-4px); } }
-.dock__btn:focus-visible { transform: translateY(-4px); }
+.dock__btn { display: block; position: relative; transition: transform 200ms var(--ease-snap); }
+.dock__btn:hover, .dock__btn:focus-visible { transform: translateY(-4px); }
 .dock__btn:active { transform: translateY(-4px) scale(.97); }
-.dock__icon { display: block; width: 54px; height: 54px; border-radius: 12.5px; box-shadow: 0 3px 8px rgba(0,0,0,.20), 0 1px 2px rgba(0,0,0,.10); }
+.dock__btn:focus-visible { outline: 2px solid color-mix(in srgb, var(--accent) 70%, transparent); outline-offset: 3px; border-radius: 14px; }
+.app-img {
+  width: 54px; height: 54px; display: block;
+  border-radius: 12.5px;
+  box-shadow: inset 0 0 0 .5px rgba(255,255,255,.22), 0 3px 8px rgba(0,0,0,.20), 0 1px 2px rgba(0,0,0,.10);
+}
 .dock__badge {
-  position: absolute;
-  top: -5px; right: -6px;
-  min-width: 19px; height: 19px;
-  padding: 0 5px;
+  position: absolute; top: -5px; right: -6px;
+  min-width: 19px; height: 19px; padding: 0 5px;
   display: grid; place-items: center;
   border-radius: 10px;
-  font-size: 11px; font-weight: 600; line-height: 1;
-  font-variant-numeric: tabular-nums;
-  color: var(--badge-text);
-  background: var(--badge-bg);
+  font-size: 11px; font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums;
+  color: var(--badge-text); background: var(--badge-bg);
   box-shadow: 0 1px 3px rgba(0,0,0,.18), inset 0 0 0 .5px var(--badge-rim);
   pointer-events: none;
 }
 .dock__label {
-  position: absolute;
-  left: 50%; bottom: calc(100% + 16px);
+  position: absolute; left: 50%; bottom: calc(100% + 16px);
   transform: translateX(-50%) translateY(4px);
-  padding: 4px 10px;
-  border-radius: 9px;
-  font-size: 13px;
-  white-space: nowrap;
-  color: var(--text-1);
+  padding: 4px 10px; border-radius: 9px;
+  font-size: 13px; white-space: nowrap; color: var(--text-1);
   background: var(--dock-bg);
   box-shadow: 0 4px 14px rgba(0,0,0,.14), inset 0 0 0 .5px rgba(255,255,255,.4);
-  opacity: 0;
-  pointer-events: none;
+  opacity: 0; pointer-events: none;
   transition: opacity 150ms var(--ease-snap), transform 150ms var(--ease-snap);
 }
-@media (hover: hover) { .dock__item:hover .dock__label { opacity: 1; transform: translateX(-50%) translateY(0); } }
-.dock__btn:focus-visible + .dock__label { opacity: 1; transform: translateX(-50%) translateY(0); }
+.dock__item:hover .dock__label, .dock__btn:focus-visible + .dock__label { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-/* ---------- focus ---------- */
-:focus-visible { outline: 2px solid color-mix(in srgb, var(--accent) 70%, transparent); outline-offset: 2px; }
 
-/* ---------- narrow or short windows: readable stack (the starter's breakpoints) ----------
-   Each widget becomes a wide card (ref 2's wide widgets) with wallpaper round it. */
-@media (max-width: 1023px), (max-height: 619px) {
-  body { overflow-x: hidden; overflow-y: auto; }
-  .desktop {
-    height: auto; min-height: 100vh; min-height: 100dvh;
-    justify-content: flex-start;
-    padding: max(24px, calc(env(safe-area-inset-top) + 12px)) max(16px, calc(env(safe-area-inset-right) + 16px)) calc(112px + env(safe-area-inset-bottom)) max(16px, calc(env(safe-area-inset-left) + 16px));
-  }
-  .stage { width: 100%; max-width: 460px; gap: 14px; }
-  .widgets { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; gap: 14px; }
-  .widgets > li { grid-column: auto !important; grid-row: auto !important; }
-  .w, .w--wide { height: auto; padding: 16px 18px 18px; border-radius: 28px; }
-  .w__data { margin-top: 12px; }
-  .big__num { font-size: 52px; }
-  .big__unit { font-size: 15px; }
-  .w--plan .big { flex-direction: column; align-items: flex-start; gap: 4px; }
-  .slots { height: 50px; gap: 5px; }
-  .slot { border-radius: 10px; font-size: 22px; }
+/* ============================================================
+   Layouts
+   ============================================================ */
 
-  .w--cal .w__data { display: grid; grid-template-columns: 116px minmax(0, 1fr); column-gap: 22px; align-items: center; }
-  .cal__ring { width: 116px; margin: 0; }
-  .cal__num { font-size: 26px; }
-  .cal__unit { margin-top: 3px; font-size: 11px; }
-  .cal__stats { grid-template-columns: minmax(0, 1fr); gap: 12px; padding-top: 0; border-top: 0; }
-
-  .day { padding-top: 16px; }
+/* Desktop (1440x900, 1280x800): the board fills the window above the Dock, no page scroll. */
+@media (min-width: 1180px) and (min-height: 680px) {
+  body { overflow: hidden; }
+  .desktop { height: 100vh; height: 100dvh; }
+  .alt-b .board { flex: 1; grid-template-columns: minmax(0, 2.1fr) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
 }
-@media (max-width: 640px) {
-  /* three apps fit at near-iPhone size: each icon is well over 44x44, so no extra hit area is needed */
-  .dock { bottom: calc(8px + env(safe-area-inset-bottom, 0px)); gap: 14px; padding: 8px 12px; border-radius: 28px; }
-  .dock__icon { width: 52px; height: 52px; border-radius: 12px; }
-  .dock__label { display: none; }
+@media (min-width: 1180px) and (min-height: 680px) and (max-height: 840px) {
+  .desktop { --gap: 14px; padding-top: 18px; }
+  .hdr__date { font-size: 30px; }
 }
 
-/* ---------- accessibility fallbacks ---------- */
+/* Tablet and short windows: the page scrolls; agenda full width, the three tiles in a row under it */
+@media not all and (min-width: 1180px) and (min-height: 680px) {
+  .alt-b .board { flex: none; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto; }
+  .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: auto; }
+  .panel.cc { min-height: 150px; }
+}
+
+/* ---------- accessibility fallbacks (from the starter) ---------- */
 @media (prefers-reduced-transparency: reduce) {
-  .w, .datepill, .dock, .dock__label { -webkit-backdrop-filter: none; backdrop-filter: none; }
-  .w { background: rgb(30, 74, 168); }
-  .dock, .dock__label { background: rgba(246, 246, 248, .96); }
-  :root { --cc-label-bg: rgb(30, 74, 168); }
+  .panel, .acct, .dock, .dock__label, .mode, .sync { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+  .panel { background: rgba(246, 246, 248, .97); }
+  .acct, .dock, .dock__label, .mode, .sync { background: rgba(246, 246, 248, .96); }
 }
 @media (prefers-reduced-transparency: reduce) and (prefers-color-scheme: dark) {
-  .w { background: rgba(48, 48, 56, .96); }
-  .dock, .dock__label { background: rgba(40, 40, 44, .96); }
-  :root { --cc-label-bg: rgba(48, 48, 56, .96); }
+  .panel { background: rgba(40, 40, 44, .97); }
+  .acct, .dock, .dock__label, .mode, .sync { background: rgba(40, 40, 44, .96); }
 }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .w { background: rgb(30, 74, 168); }
-  .dock { background: rgba(246, 246, 248, .96); }
-  :root { --cc-label-bg: rgb(30, 74, 168); }
+  .panel, .acct, .dock, .mode, .sync { background: rgba(246, 246, 248, .96); }
+  @media (prefers-color-scheme: dark) { .panel, .acct, .dock, .mode, .sync { background: rgba(40, 40, 44, .97); } }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition-duration: 150ms !important; transition-property: opacity !important; }
-  .w:active, .dock__btn:hover, .dock__btn:focus-visible, .dock__btn:active { transform: none !important; }
-  .dock__label { transform: translateX(-50%) !important; }
 }
+/* ============================================================
+   TITLE: Home · Agenda
+   Alternative B: "Agenda column plus compact stat tiles" (direction 3) with the
+   evening behaviour of direction 4. Left two-thirds: one plain agenda list,
+   tonight's wrap-up then tomorrow (events and dated tasks mixed, grouped by time
+   of day, past collapsed to one line, overdue as one calm "carried over" line).
+   Right: three Control Center tiles (tasks left, kcal left, next deadline).
+   ============================================================ */
 
-/* ---------- data layer: sync note, account control, sign-in sheet (same glass tokens as above) ---------- */
-[hidden] { display: none !important; }
-/* the narrow Calories layout re-sets .w__data to grid after the signed-out rule: win on specificity */
-[data-auth="signed-out"] .w .w__data { display: none; }
-.slot--more { font-size: 14px; font-weight: 600; color: var(--cc-text-2); }
-.cal__fill.is-over { stroke: var(--tile-warn); }
-.stat__v.is-over { color: var(--tile-warn); }
-
-/* top-right of the desktop, beside the date: a quiet sync note and a small account button */
-.topbar {
-  position: absolute; z-index: 5;
-  top: var(--top-gap); right: var(--edge);
-  display: flex; align-items: center; gap: 8px;
+/* evening mode, said out loud next to the account button (direction 4: the mode must be visible) */
+.hdr__right { display: flex; align-items: center; gap: 12px; }
+.mode {
+  display: inline-flex; align-items: center; gap: 7px;
+  height: 32px; padding: 0 14px 0 11px; border-radius: 999px;
+  font-size: 13px; font-weight: 600; color: var(--text-1);
+  background: var(--round-bg);
+  -webkit-backdrop-filter: blur(24px) saturate(170%); backdrop-filter: blur(24px) saturate(170%);
+  box-shadow: 0 4px 14px rgba(12, 36, 92, .12), inset 0 .5px 0 rgba(255,255,255,.5);
 }
-.sync, .acct {
-  height: 32px; border-radius: 999px;
-  display: inline-flex; align-items: center; justify-content: center;
+.mode .ic { font-size: 15px; color: var(--accent-text); }
+.mode:is(.is-baking, .is-baked) { background: linear-gradient(var(--round-bg), var(--round-bg)), var(--baked) 0 0 / 100% 100% no-repeat; }
+.mode.is-baked { -webkit-backdrop-filter: none; backdrop-filter: none; }
+
+/* ---------- the agenda ---------- */
+.agenda { padding: 16px 22px 14px; }
+.agenda:active { transform: none; }
+.ag__top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-top: 8px; }
+.ag__top h2 { font-size: 22px; font-weight: 700; letter-spacing: -0.015em; }
+.ag__top span { font-size: 13px; color: var(--text-2); }
+
+.ag__dh { display: flex; align-items: baseline; gap: 10px; padding: 12px 8px 6px; border-bottom: .5px solid var(--sep); }
+.ag__dh b { font-size: 17px; font-weight: 700; letter-spacing: -0.01em; }
+.ag__dh span { font-size: 13px; color: var(--text-2); }
+.ag__dh .ag__k { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-2); }
+
+/* tomorrow leads in the evening: bigger heading, its own lighter block */
+.ag__tmrw { margin-top: clamp(10px, 2vh, 18px); padding: 2px 6px 6px; border-radius: 16px; background: var(--chip-bg); box-shadow: inset 0 0 0 .5px var(--sep); }
+.ag__tmrw .ag__dh { padding-top: 12px; }
+.ag__tmrw .ag__dh b { font-size: 24px; letter-spacing: -0.02em; }
+.ag__tmrw .ag__dh .ag__k { color: var(--accent-text); }
+
+/* one row: time-of-day group | time | what | where | tag */
+.ag__row {
+  --c: var(--c-all);
+  display: grid;
+  grid-template-columns: 84px 92px minmax(0, 1fr) minmax(0, .6fr) auto;
+  align-items: center; column-gap: 12px;
+  min-height: 46px;
+  padding: 0 8px; border-radius: 10px;
+}
+a.ag__row:hover { background: var(--hover); }
+.ag__row + .ag__row:not(.ag__row--gap) { border-top: .5px solid var(--sep); }
+.ag__row.ag__row--gap + .ag__row { border-top: 0; }
+.ag__grp { font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--text-2); }
+.ag__time { font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.ag__time small { font-weight: 500; color: var(--text-2); font-size: 13px; }
+.ag__what { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.ag__bar { width: 4px; height: 20px; border-radius: 2px; background: var(--c); flex: none; }
+.ag__what .task__tick { width: 16px; height: 16px; margin: 0; }
+.ag__t { font-size: 15px; font-weight: 600; }
+.ag__m { font-size: 13px; color: var(--text-2); }
+.ag__tag { font-size: 11px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; color: var(--text-2); white-space: nowrap; }
+.ag__row.is-next .ag__tag { padding: 3px 8px; border-radius: 999px; color: #fff; background: var(--next-bg); }
+.ag__row.is-next .ag__t { font-size: 16px; }
+.ag__row--task .ag__t { font-weight: 500; }
+.ag__row--quiet { color: var(--text-2); }
+.ag__row--quiet .ag__t { font-weight: 500; font-size: 14px; color: var(--text-2); }
+.ag__row--quiet .ic { font-size: 16px; color: var(--text-2); }
+.ag__row--gap { min-height: 24px; }
+.ag__row--gap .ag__t { grid-column: 3 / -1; display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 500; color: var(--text-2); }
+.ag__row--gap .ag__t::after { content: ""; flex: 1; border-top: 1px dashed var(--sep); }
+
+/* ---------- stat tiles: Control Center glass (deep blue, white text) ---------- */
+.stats { display: grid; grid-template-rows: repeat(3, minmax(0, 1fr)); gap: var(--gap); min-height: 0; }
+.panel.cc {
+  padding: 16px 18px;
   color: var(--cc-text);
-  background: var(--cc-label-bg);
-  -webkit-backdrop-filter: blur(16px) saturate(190%) brightness(.68);
-  backdrop-filter: blur(16px) saturate(190%) brightness(.68);
-  box-shadow: var(--cc-shadow);
+  background: var(--cc-bg);
+  -webkit-backdrop-filter: var(--cc-blur); backdrop-filter: var(--cc-blur);
+  box-shadow: var(--cc-shadow), inset 0 0 0 .5px rgba(255,255,255,.18);
 }
-.sync { padding: 0 12px; font-size: 13px; font-weight: 500; white-space: nowrap; }
-.acct { position: relative; width: 32px; font-size: 18px; -webkit-tap-highlight-color: transparent; }
-.acct::before { content: ""; position: absolute; inset: -6px; }   /* 44x44 hit area, same look */
-.acct:active { transform: scale(.94); }
-@media (prefers-color-scheme: dark) {
-  .sync, .acct { -webkit-backdrop-filter: blur(16px) saturate(190%); backdrop-filter: blur(16px) saturate(190%); }
+.panel.cc:is(.is-baking, .is-baked) { background: var(--cc-bg), var(--baked) 0 0 / 100% 100% no-repeat; }
+.cc .phead { color: var(--cc-text-2); }
+.cc__body { flex: 1; display: flex; flex-direction: column; justify-content: center; min-height: 0; }
+.cc__big { font-size: clamp(46px, 7.4vh, 64px); font-weight: 700; letter-spacing: -0.035em; line-height: 1; font-variant-numeric: tabular-nums; }
+.cc__big small { font-size: .42em; font-weight: 600; letter-spacing: -0.01em; margin-left: 6px; color: var(--cc-text-2); }
+.cc__t { margin-top: 6px; font-size: 16px; font-weight: 600; }
+.cc__sub { margin-top: 5px; font-size: 13px; color: var(--cc-text-2); }
+.cc__bar { margin-top: 12px; height: 6px; border-radius: 3px; background: var(--cc-track); overflow: hidden; }
+.cc__bar i { display: block; height: 100%; border-radius: inherit; background: var(--cc-on); }
+@media (prefers-reduced-transparency: reduce) { .panel.cc { background: #0b3c9e; } }
+@media (prefers-reduced-transparency: reduce) and (prefers-color-scheme: dark) { .panel.cc { background: #2c2e38; } }
+@media (max-height: 840px) {
+  .ag__dh { padding-top: 9px; padding-bottom: 4px; }
+  .ag__tmrw .ag__dh b { font-size: 21px; }
+  .ag__tmrw { margin-top: 8px; }
+  .ag__row--gap { min-height: 20px; }
+  .ag__row { min-height: 38px; }
 }
 
+/* ============================================================
+   MERGED: Alternative A's next-up headline leads the agenda (R13), then B's
+   agenda (tonight, then tomorrow) and B's three tiles on the right. The next
+   event is shown once, as the headline; its agenda row shrinks to a slim
+   reference (R6). The agenda shortens itself to fit one screen at any time of day.
+   ============================================================ */
+.agenda .phead__sub { flex: none; font-size: 13px; font-weight: 500; color: var(--text-2); }
+
+/* the headline: countdown left, what and where right, one line of kicker above */
+.nx { display: block; flex: none; margin-top: 10px; padding: 0 8px 14px; }
+.nx__kicker { font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--accent-text); }
+.nx__row { margin-top: 4px; display: flex; align-items: center; gap: 28px; min-width: 0; }
+.nx__count { flex: none; font-size: 64px; font-weight: 700; letter-spacing: -0.04em; line-height: 1; color: var(--accent-text); font-variant-numeric: tabular-nums; }
+.nx__what { min-width: 0; padding-left: 28px; border-left: .5px solid var(--sep); }
+.nx__title { font-size: 30px; font-weight: 700; letter-spacing: -0.022em; line-height: 1.15; }
+.nx__meta { margin-top: 5px; display: flex; align-items: center; gap: 8px; font-size: 15px; color: var(--text-2); }
+.cdot { --c: var(--c-all); width: 9px; height: 9px; border-radius: 50%; background: var(--c); flex: none; }
+.agenda .ag__today > .ag__dh:first-child { border-top: .5px solid var(--sep); }
+
+/* the next event's own row, reduced to a pointer back up to the headline */
+.ag__row--ref { min-height: 30px; color: var(--text-2); }
+.ag__row--ref .ag__time { font-size: 13px; font-weight: 500; color: var(--text-2); }
+.ag__row--ref .ag__t { font-size: 13px; font-weight: 500; color: var(--text-2); }
+.ag__row--ref .ag__bar { height: 12px; opacity: .7; }
+.ag__row--ref .ag__tag { color: var(--accent-text); }
+
+/* carried over: one calm line that may wrap, never cut off (R16) */
+.ag__row--quiet.is-wrap { padding-top: 7px; padding-bottom: 7px; }
+.ag__row--quiet.is-wrap .ag__what { align-items: flex-start; }
+.ag__row--quiet.is-wrap .ic { margin-top: 1px; }
+.ag__row--quiet.is-wrap .ag__t { white-space: normal; overflow: visible; line-height: 18px; }
+.ag__row--quiet.is-wrap .ag__t b { font-weight: 600; color: var(--text-1); }
+
+
+/* fitting it all on one screen (R7): the headline takes the room the "Agenda" title row had,
+   rows are a little tighter than alternative B's; the script below collapses Tomorrow and caps rows when needed */
+.agenda { padding-bottom: 14px; }
+.agenda .ag__row { min-height: 36px; }
+.agenda .ag__row--ref { min-height: 28px; }
+.agenda .ag__row--gap { min-height: 18px; }
+.agenda .ag__dh { padding: 9px 8px 5px; }
+.agenda .ag__tmrw { margin-top: 10px; }
+.agenda .ag__tmrw .ag__dh { padding-top: 10px; }
+@media (max-height: 840px) {
+  .nx { margin-top: 6px; padding-bottom: 10px; }
+  .nx__count { font-size: 54px; }
+  .nx__title { font-size: 26px; }
+  .agenda .ag__row { min-height: 35px; }
+  .agenda .ag__row--ref { min-height: 26px; }
+  .agenda .ag__row--gap { min-height: 16px; }
+  .agenda .ag__dh { padding: 7px 8px 4px; }
+  .agenda .ag__tmrw { margin-top: 8px; }
+  .agenda .ag__tmrw .ag__dh { padding-top: 8px; }
+  .agenda .ag__tmrw .ag__dh b { font-size: 20px; }
+}
+
+/* when the day is busy: Tomorrow as one line, and "+N more" closing a capped section */
+.agenda .ag__tmrw.is-short { padding: 0 6px; }
+.ag__tmrw.is-short .ag__grp { color: var(--accent-text); }
+.ag__tmrw.is-short .ag__t b { font-weight: 600; color: var(--text-1); }
+.ag__row--more .ag__t { font-weight: 600; }
+
+/* ============================================================
+   Wired to real data: the states the static design didn't have
+   ============================================================ */
+[hidden] { display: none !important; }
+.task__tick { width: 18px; height: 18px; flex: none; border-radius: 50%; box-shadow: inset 0 0 0 1.5px var(--tick-ring); }
+.hdr__right { flex: none; }
+
+/* the quiet "Offline · Updated 09:31" note beside the account button */
+.sync {
+  display: inline-flex; align-items: center;
+  height: 32px; padding: 0 14px; border-radius: 999px;
+  font-size: 13px; font-weight: 500; white-space: nowrap; color: var(--text-1);
+  background: var(--round-bg);
+  -webkit-backdrop-filter: blur(24px) saturate(170%); backdrop-filter: blur(24px) saturate(170%);
+  box-shadow: 0 4px 14px rgba(12, 36, 92, .12), inset 0 .5px 0 rgba(255,255,255,.5);
+}
+.acct .ic { font-size: 20px; }
+.acct { -webkit-tap-highlight-color: transparent; cursor: pointer; }
+
+/* carried over / done earlier: one calm line, may take a second line, never cut mid-row */
+.ag__row--quiet.is-wrap .ag__t {
+  white-space: normal; overflow: hidden; text-overflow: ellipsis;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2;
+}
+.ell2 { white-space: normal; overflow: hidden; min-width: 0; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; }
+.ag__what--wide { grid-column: span 3; }
+.nx__title { overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; white-space: normal; }
+.nx__count.is-long { font-size: 46px; }
+.nx__meta .num, .nx__meta span { min-width: 0; }
+.nx__meta > span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-height: 840px) { .nx__count.is-long { font-size: 40px; } }
+.nx__count.is-word { font-size: 44px; }
+@media (max-height: 840px) { .nx__count.is-word { font-size: 38px; } }
+.ag__row.is-next .ag__tag, .ag__row--ref .ag__tag { white-space: nowrap; }
+a.nx:focus-visible, a.ag__row:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 75%, transparent); outline-offset: 2px; }
+.cc__sub { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; }
+
+/* signed out, or nothing to show yet */
+.so { flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; text-align: center; padding: 24px; }
+.so__k { font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--accent-text); }
+.so__t { font-size: 30px; font-weight: 700; letter-spacing: -0.022em; line-height: 1.15; }
+.so__s { font-size: 15px; color: var(--text-2); max-width: 36ch; }
+.so__btn { margin-top: 12px; min-height: 44px; padding: 0 24px; border-radius: 999px; font-size: 16px; font-weight: 600; color: #fff; background: var(--next-bg); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.so__btn:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 75%, transparent); outline-offset: 3px; }
+.agenda[data-state="so"] > :is(.nx, .ag__today, .ag__tmrw) { display: none; }
+.agenda:not([data-state="so"]) > .so { display: none; }
+.cc__out { display: none; flex: 1; align-items: center; font-size: 16px; font-weight: 500; color: var(--cc-text-2); }
+[data-auth="signed-out"] .cc__body { display: none; }
+[data-auth="signed-out"] .cc__out { display: flex; }
+[data-auth="signed-out"] .dock__badge { display: none; }
+[data-auth="signed-out"] .mode { display: none; }
+
+/* sign-in / account sheet: same glass as the panels */
 .signin {
   width: min(380px, calc(100vw - 32px)); max-width: none;
   margin: auto; padding: 22px 22px 20px;
@@ -570,36 +688,71 @@ svg.ic--fill { fill: currentColor; stroke: none; }
 .signin__btn:disabled { opacity: .6; }
 .signin__btn:focus-visible { outline: 2px solid color-mix(in srgb, var(--accent) 70%, transparent); outline-offset: 2px; }
 .signin__who { margin: 0 0 16px; font-size: 15px; font-weight: 500; overflow-wrap: anywhere; }
-
-@media (max-width: 1023px), (max-height: 619px) {
-  .topbar { top: max(24px, calc(env(safe-area-inset-top) + 12px)); right: max(16px, calc(env(safe-area-inset-right) + 16px)); }
-}
-@media (max-width: 400px) { .sync { max-width: 52vw; overflow: hidden; text-overflow: ellipsis; } }
-/* Phones: the sync note ("Offline · Updated 09:31") is wider than the room left beside the date pill, so it
-   drops to a second row under the account button (still top right) and the tiles make room for it. */
-@media (max-width: 480px) {
-  .topbar { flex-direction: column-reverse; align-items: flex-end; gap: 8px; }
-  .sync { height: 28px; max-width: calc(100vw - 32px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)); font-size: 12px; }
-  .desktop:has(.sync:not([hidden])) .widgets { margin-top: 32px; }
-  /* fit all three widgets above the Dock in Safari with its bars showing (iPhone 17: about 700pt visible) */
-  .stage, .widgets { gap: 12px; }
-  .w, .w--wide { padding: 14px 16px 16px; }
-  .w__data { margin-top: 8px; }
-  .big__num { font-size: 46px; }
-  .w--cal .w__data { grid-template-columns: 96px minmax(0, 1fr); }
-  .cal__ring { width: 96px; }
-  .cal__num { font-size: 22px; }
-  .day { padding-top: 10px; }
-}
-@media (prefers-reduced-transparency: reduce) {
-  .sync, .acct, .signin { -webkit-backdrop-filter: none; backdrop-filter: none; }
-  .signin { background: rgba(246, 246, 248, .97); }
-}
+@media (prefers-reduced-transparency: reduce) { .signin { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(246, 246, 248, .97); } }
 @media (prefers-reduced-transparency: reduce) and (prefers-color-scheme: dark) { .signin { background: rgba(40, 40, 44, .97); } }
 @media (prefers-reduced-motion: reduce) { .signin[open] { animation: none; } }
+
+/* Phone (402x874 and narrower): one column, the page scrolls, everything clears the Dock at the end.
+   Not designed beyond "usable": the agenda rows become two-line rows. */
+@media (max-width: 700px) {
+  .desktop { --edge: 16px; --gap: 12px; --dock-clear: calc(6px + 62px + 28px + env(safe-area-inset-bottom)); padding-top: calc(14px + env(safe-area-inset-top)); }
+  .hdr { padding: 0 2px; align-items: flex-start; }
+  .hdr__hello { font-size: 14px; }
+  .hdr__date { font-size: clamp(22px, 6.6vw, 28px); }
+  .hdr__right { flex-direction: column-reverse; align-items: flex-end; gap: 8px; }
+  .mode { display: none; }
+  .sync { height: 28px; font-size: 12px; max-width: calc(100vw - 32px); }
+  .panel { border-radius: 22px; padding: 13px 14px 14px; }
+  .agenda { padding: 14px 14px 12px; }
+  .agenda .phead__sub { display: none; }
+
+  .nx { padding: 0 4px 12px; }
+  .nx__row { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .nx__count { font-size: 44px; }
+  .nx__count.is-long { font-size: 36px; }
+  .nx__count.is-word { font-size: 34px; }
+  .nx__what { padding-left: 0; border-left: 0; width: 100%; }
+  .nx__title { font-size: 24px; }
+
+  .ag__row { grid-template-columns: 54px minmax(0, 1fr) auto; grid-template-areas: "time what tag" ". m ."; align-items: center; row-gap: 0; column-gap: 10px; min-height: 0; padding: 8px 4px; }
+  .agenda .ag__row, .agenda .ag__row--ref { min-height: 0; }
+  .ag__grp { display: none; }
+  .ag__time { grid-area: time; font-size: 13px; }
+  .ag__time small { display: block; font-size: 12px; }
+  .ag__what { grid-area: what; }
+  .ag__m { grid-area: m; font-size: 12px; margin-top: -2px; }
+  .ag__tag { grid-area: tag; }
+  .ag__row:not(:has(.ag__m:not(:empty))) { grid-template-areas: "time what tag"; }
+  .ag__row--quiet, .ag__row--gap { display: flex; gap: 10px; padding: 8px 4px; }
+  .ag__row .ag__time:empty, .ag__row > span:empty:not(.ag__tag):not(.ag__m) { display: none; }
+  .ag__what--wide { grid-column: auto; flex: 1; min-width: 0; }
+  .ag__row--gap { padding: 2px 4px; }
+  .ag__row--gap .ag__t { grid-column: auto; flex: 1; }
+  .ag__row.is-next .ag__tag, .ag__row--ref .ag__tag { font-size: 10px; }
+  .agenda .ag__tmrw { margin-top: 12px; }
+  .ag__tmrw .ag__dh b { font-size: 20px; }
+  .ag__dh { flex-wrap: wrap; gap: 4px 10px; padding-left: 4px; padding-right: 4px; }
+
+  .stats { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .panel.cc { min-height: 0; padding: 14px 16px; }
+  .cc__big { font-size: 44px; }
+  .dock { padding: 6px 9px; border-radius: 24px; gap: 10px; }
+  .app-img { width: 50px; height: 50px; border-radius: 11.5px; }
+}
 </style>
 </head>
 <body data-auth="signed-in">
+
+<svg class="sprite" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="i-chev-r" viewBox="0 0 24 24"><path d="M9.5 6.5L15 12l-5.5 5.5"></path></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5.5v13M5.5 12h13"></path></symbol>
+  <symbol id="i-turn" viewBox="0 0 24 24"><path d="M9 14L4.5 9.5 9 5"></path><path d="M4.5 9.5H15a4.5 4.5 0 0 1 0 9h-3"></path></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"></circle><path d="M8.3 12.3l2.6 2.6 4.8-5.2"></path></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"></circle><path d="M12 7.8v5"></path><path d="M12 16.2h.01"></path></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M19.5 14.6A7.8 7.8 0 0 1 9.4 4.5a7.8 7.8 0 1 0 10.1 10.1z"></path></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6L7 7M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4"></path></symbol>
+</svg>
+
 <div class="wallpaper" aria-hidden="true">
   <svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
     <defs>
@@ -649,96 +802,88 @@ svg.ic--fill { fill: currentColor; stroke: none; }
     <path class="wp-crest" filter="url(#blurM)" opacity=".55" stroke-width="16" d="M-40 790 C 230 610, 520 330, 800 175 C 960 88, 1080 34, 1220 -20"></path>
     <path class="wp-crest" filter="url(#blurXS)" opacity=".95" stroke-width="2.6" d="M-40 790 C 230 610, 520 330, 800 175 C 960 88, 1080 34, 1220 -20"></path>
   </svg>
-<canvas width="1440" height="900" class="wallpaper__raster" aria-hidden="true"></canvas></div>
-
-<!-- Home: three app widgets on the wallpaper and a Dock of the same three apps. The data layer (script at the end)
-     fills what data-field marks. body[data-auth="signed-out"] shows "Sign in to see today". -->
-<main class="desktop">
-  <div class="stage">
-    <h1 class="datepill rim"><time datetime="2026-11-12" data-field="date">Thursday 12 November</time></h1>
-
-    <ul class="widgets" aria-label="Today">
-      <li class="pos-todo">
-        <a class="w w--wide rim w--todo" href="../todo/" data-tile="todo">
-          <span class="w__head" aria-hidden="true"><img class="w__icon" src="icons/todo.png" width="30" height="30" alt=""><span class="w__name">To Do</span></span>
-          <div class="w__data">
-            <span class="visually-hidden" data-field="summary">To Do: loading today.</span>
-            <span class="big" aria-hidden="true"><span class="big__num" data-field="count">–</span><span class="big__unit" data-field="unit">left today</span></span>
-            <span class="todo-hero" aria-hidden="true">
-              <span class="slots" data-field="slots" hidden></span>
-              <span class="slots__key" data-field="key"></span>
-            </span>
-          </div>
-          <span class="w__out"><span class="visually-hidden">To Do: </span>Sign in to see today</span>
-        </a>
-      </li>
-
-      <li class="pos-cal">
-        <a class="w rim w--cal" href="../calories/" data-tile="calories">
-          <span class="w__head" aria-hidden="true"><img class="w__icon" src="icons/calories.png" width="30" height="30" alt=""><span class="w__name">Calories</span></span>
-          <div class="w__data">
-            <span class="visually-hidden" data-field="summary">Calories: loading today.</span>
-            <span class="cal__ring" aria-hidden="true">
-              <svg viewBox="0 0 120 120"><circle class="cal__track" cx="60" cy="60" r="52"></circle><circle class="cal__fill" cx="60" cy="60" r="52" pathLength="100" stroke-dasharray="0 100" style="opacity:0" data-field="ring"></circle></svg>
-              <span class="cal__mid"><span class="cal__num" data-field="eaten">–</span><span class="cal__unit">kcal so far</span></span>
-            </span>
-            <span class="cal__stats w__line" aria-hidden="true">
-              <span><span class="stat__v" data-field="left" style="display:block">–</span><span class="stat__k" style="display:block" data-field="left-label">kcal left</span></span>
-              <span><span class="stat__v" data-field="goal" style="display:block">–</span><span class="stat__k" style="display:block">maintenance</span></span>
-            </span>
-          </div>
-          <span class="w__out"><span class="visually-hidden">Calories: </span>Sign in to see today</span>
-        </a>
-      </li>
-
-      <li class="pos-plan">
-        <a class="w w--wide rim w--plan" href="../planner/" data-tile="planner">
-          <span class="w__head" aria-hidden="true"><img class="w__icon" src="icons/planner.png" width="30" height="30" alt=""><span class="w__name">Planner</span></span>
-          <div class="w__data">
-            <span class="visually-hidden" data-field="summary">Planner: loading today.</span>
-            <span class="big" aria-hidden="true"><span class="big__num" data-field="count">–</span><span class="big__unit" data-field="unit">events today</span></span>
-            <!-- the day from 08:00 to 22:00: --s/--e are an event's start and end, --t the time, as a fraction of it -->
-            <span class="day" aria-hidden="true">
-              <span class="day__track" style="display:block" data-field="day"></span>
-              <span class="day__hours" style="display:block"><span style="--t: .0714">09</span><span style="--t: .2857">12</span><span style="--t: .5">15</span><span style="--t: .7143">18</span><span style="--t: .9286">21</span></span>
-            </span>
-            <span class="next w__line" aria-hidden="true">
-              <span class="next__when" data-field="next-time">–</span>
-              <span class="next__title" data-field="next-title" hidden></span>
-              <span class="next__place" data-field="next-place" hidden></span>
-            </span>
-          </div>
-          <span class="w__out"><span class="visually-hidden">Planner: </span>Sign in to see today</span>
-        </a>
-      </li>
-    </ul>
-  </div>
-
-<!-- top right: a quiet sync note (only when a refresh failed) and the account button -->
-<div class="topbar">
-  <span class="sync" data-field="sync" role="status" hidden></span>
-  <button class="acct" type="button" data-field="account" aria-label="Sign in" title="Sign in"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.6"></circle><path d="M5 19.5c.9-3.4 3.7-5.2 7-5.2s6.1 1.8 7 5.2"></path></svg></button>
 </div>
+
+<!-- Home dashboard: next up as the headline, the rest of today and tomorrow as one agenda, three tiles on the right.
+     The data layer (last script) fills everything marked data-field; body[data-auth="signed-out"] swaps the data for a sign-in prompt. -->
+<main class="desktop alt-b">
+  <header class="hdr">
+    <div>
+      <p class="hdr__hello" data-field="hello">Good evening</p>
+      <h1 class="hdr__date"><time data-field="date" datetime="">&nbsp;</time></h1>
+    </div>
+    <div class="hdr__right">
+      <span class="sync" data-field="sync" role="status" hidden></span>
+      <span class="mode" data-field="mode"><svg class="ic" aria-hidden="true"><use href="#i-sun" data-field="mode-icon"></use></svg><span data-field="mode-text"></span></span>
+      <button class="acct" type="button" data-field="account" aria-label="Sign in" title="Sign in"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="3.6"></circle><path d="M5 19.5c.9-3.4 3.7-5.2 7-5.2s6.1 1.8 7 5.2"></path></svg></button>
+    </div>
+  </header>
+
+  <div class="board">
+    <section class="panel rim agenda" aria-label="Next up, then the rest of today and tomorrow" data-state="so">
+      <div class="phead">
+        <img class="phead__icon" src="icons/planner.png" alt="">
+        <span class="phead__name">Planner and To Do</span>
+        <span class="phead__sub" data-field="ag-sub"></span>
+      </div>
+      <a class="nx" href="../planner/" data-field="nx" aria-label="Next up">
+        <p class="nx__kicker" data-field="nx-kicker"></p>
+        <div class="nx__row">
+          <p class="nx__count" data-field="nx-count"></p>
+          <div class="nx__what">
+            <h2 class="nx__title" data-field="nx-title"></h2>
+            <p class="nx__meta" data-field="nx-meta"></p>
+          </div>
+        </div>
+      </a>
+      <div class="ag__today" data-field="ag-today"></div>
+      <div class="ag__tmrw" data-field="ag-tmrw"></div>
+      <div class="so" role="status">
+        <p class="so__k" data-field="so-kicker">Home</p>
+        <h2 class="so__t" data-field="so-title">Loading today</h2>
+        <p class="so__s" data-field="so-sub"></p>
+        <button class="so__btn" type="button" data-act="open-sheet" data-field="so-btn" hidden>Sign in</button>
+      </div>
+    </section>
+
+    <aside class="stats" aria-label="At a glance">
+      <a class="panel rim cc" href="../todo/" data-tile="todo" aria-label="To Do: tasks left">
+        <div class="phead"><img class="phead__icon" src="icons/todo.png" alt=""><span class="phead__name" data-field="name">Tasks left</span><svg class="ic" aria-hidden="true"><use href="#i-chev-r"></use></svg></div>
+        <div class="cc__body"><div class="cc__big" data-field="big">–</div><p class="cc__sub" data-field="sub"></p></div>
+        <p class="cc__out">Sign in to see today</p>
+      </a>
+      <a class="panel rim cc" href="../calories/" data-tile="calories" aria-label="Calories: kcal left">
+        <div class="phead"><img class="phead__icon" src="icons/calories.png" alt=""><span class="phead__name" data-field="name">Calories left</span><svg class="ic" aria-hidden="true"><use href="#i-chev-r"></use></svg></div>
+        <div class="cc__body"><div class="cc__big" data-field="big">–</div><div class="cc__bar" aria-hidden="true"><i data-field="bar"></i></div><p class="cc__sub" data-field="sub"></p></div>
+        <p class="cc__out">Sign in to see today</p>
+      </a>
+      <a class="panel rim cc" href="../planner/" data-tile="planner" aria-label="Planner: next deadline">
+        <div class="phead"><img class="phead__icon" src="icons/planner.png" alt=""><span class="phead__name">Next deadline</span><svg class="ic" aria-hidden="true"><use href="#i-chev-r"></use></svg></div>
+        <div class="cc__body"><div class="cc__big" data-field="big">–</div><p class="cc__t ell" data-field="title"></p><p class="cc__sub" data-field="sub"></p></div>
+        <p class="cc__out">Sign in to see today</p>
+      </a>
+    </aside>
+  </div>
 </main>
 
-<!-- Dock: the three apps, same tab. Badges match the widget numbers (Calories has no count to badge). -->
-<ul class="dock" aria-label="Apps">
-  <li class="dock__item">
-    <a class="dock__btn" href="../todo/" aria-label="To Do" data-dock="todo"><img class="dock__icon" src="icons/todo.png" width="54" height="54" alt=""><span class="dock__badge" aria-hidden="true" data-field="todo-count" hidden></span></a>
-    <span class="dock__label" aria-hidden="true">To Do</span>
-  </li>
-  <li class="dock__item">
-    <a class="dock__btn" href="../calories/" aria-label="Calories" data-dock="calories"><img class="dock__icon" src="icons/calories.png" width="54" height="54" alt=""></a>
-    <span class="dock__label" aria-hidden="true">Calories</span>
-  </li>
-  <li class="dock__item">
-    <a class="dock__btn" href="../planner/" aria-label="Planner" data-dock="planner"><img class="dock__icon" src="icons/planner.png" width="54" height="54" alt=""><span class="dock__badge" aria-hidden="true" data-field="planner-count" hidden></span></a>
-    <span class="dock__label" aria-hidden="true">Planner</span>
-  </li>
-</ul>
+<!-- Dock: the three apps, same tab. The To Do badge matches the Tasks tile. -->
+<nav class="dock" aria-label="Apps">
+  <ul style="display:contents">
+    <li class="dock__item">
+      <a class="dock__btn" href="../todo/" aria-label="To Do" data-dock="todo"><img class="app-img" src="icons/todo.png" width="54" height="54" alt=""><span class="dock__badge" aria-hidden="true" data-field="todo-count" hidden></span></a>
+      <span class="dock__label" aria-hidden="true">To Do</span>
+    </li>
+    <li class="dock__item">
+      <a class="dock__btn" href="../calories/" aria-label="Calories" data-dock="calories"><img class="app-img" src="icons/calories.png" width="54" height="54" alt=""></a>
+      <span class="dock__label" aria-hidden="true">Calories</span>
+    </li>
+    <li class="dock__item">
+      <a class="dock__btn" href="../planner/" aria-label="Planner" data-dock="planner"><img class="app-img" src="icons/planner.png" width="54" height="54" alt=""></a>
+      <span class="dock__label" aria-hidden="true">Planner</span>
+    </li>
+  </ul>
+</nav>
 
-
-<!-- sign-in / account sheet: same glass as the task sheet. One account for all the apps; there is no sign-up here. -->
 <dialog class="signin" id="signin" aria-labelledby="signin-title">
   <form id="signin-form" data-panel="in" autocomplete="on">
     <h2 class="signin__title" id="signin-title">Sign in</h2>
@@ -763,13 +908,13 @@ svg.ic--fill { fill: currentColor; stroke: none; }
 
 <script>
 /* Static glass. The wallpaper is drawn once into a canvas (no live SVG blur), and glass that sits still on it
-   (the widgets, the date and the Dock) gets its blurred backdrop baked into an image
-   at the same blur, so nothing re-blurs. It looks the same; on a resize, a theme change,
+   (the dashboard panels, the account button and the Dock) gets its blurred backdrop baked into an image
+   at the same blur, so nothing re-blurs while the list scrolls. It looks the same; on a resize, a theme change,
    the stacked layout or reduced transparency the live backdrop-filter is used instead. */
 const glass = (() => {
   const wp = document.querySelector('.wallpaper'), svg = wp?.querySelector('svg');
   if (!svg || !window.CanvasRenderingContext2D) return { refresh() {} };
-  const desk = matchMedia('(min-width: 1024px) and (min-height: 620px)');
+  const desk = matchMedia('(min-width: 1180px) and (min-height: 680px)');
   const dark = matchMedia('(prefers-color-scheme: dark)');
   const solid = matchMedia('(prefers-reduced-transparency: reduce)');
   // Safari (Mac and iPhone) can have ctx.filter and still not blur, which left baked glass flat grey: test that it
@@ -783,7 +928,7 @@ const glass = (() => {
       return g.getImageData(2, 4, 1, 1).data[3] > 0;
     } catch { return false; }
   })();
-  const SEL = '.w, .datepill, .dock';
+  const SEL = '.panel, .acct, .dock';
   const rasters = {};                 // 'light' | 'dark' -> canvas, kept for the session
   let shown = null, job = 0, timer = 0;
   const urls = new Map();
@@ -903,7 +1048,6 @@ const glass = (() => {
   return { refresh, soon };
 })();
 
-
 (document.fonts?.ready || Promise.resolve()).then(() => glass.refresh());
 </script>
 
@@ -912,31 +1056,48 @@ const glass = (() => {
    Data layer: read-only numbers for today from the Supabase project the apps share.
    - GET only on /rest/v1 (get() below is the only way this page touches it).
    - Session in localStorage 'home.session' only; cache of the last good numbers in 'home.cache'.
-   - Every tile loads and fills on its own, so one failing never blanks the others.
-   - Page text always goes in with textContent, never innerHTML.
+   - Every source loads on its own, so one failing never blanks the others.
+   - Page text always goes in with textContent (the el() helper), never innerHTML.
+   What each app's data looks like, and how it is counted (same rules as the apps' own Today views):
+   - todo.doc.tasks[{id,title,due 'YYYY-MM-DD'|null,done,doneAt,priority,order,listId,u}], doc.lists[{id,name}],
+     doc.deleted{'t:<id>': ms}. A task counts when it is open, not deleted (tombstone >= u), and due today or earlier.
+   - planner.doc.events[{id,title,cal,date,s,e (decimal hours),repeat 'none'|'weekly',until,skip[],where}],
+     doc.tasks[{id,title,cal,due,done}], doc.deleted{<id>: ms}. Every calendar counts (hidden calendars are per
+     device and not in the doc). A weekly repeat is on a day when it is a whole number of weeks after its first
+     date, not past `until` and the day is not in `skip`.
+   - calorie_days (only days with food have a row) and calorie_settings.maintenance_kcal (empty = 1850).
    ============================================================ */
 (() => {
   const SB_URL = 'https://ajgymyqgthxaiqoniwbe.supabase.co';
   const SB_KEY = 'sb_publishable_5JI6nVkFUSISlmX1dntU8Q_QTJUGxR5';
   const SESSION_KEY = 'home.session', CACHE_KEY = 'home.cache';
-  const TZ = 'Europe/London', DEFAULT_MAINT = 1850, SLOT_CAP = 8;
+  const TZ = 'Europe/London', DEFAULT_MAINT = 1850, DATA_V = 2;
   const $ = (sel, root = document) => root.querySelector(sel);
-  const field = (tile, name) => $(`[data-tile="${tile}"] [data-field="${name}"]`);
+  const field = (root, name) => $(`[data-field="${name}"]`, typeof root === 'string' ? $(`[data-tile="${root}"]`) : root);
   const num = n => Number(n).toLocaleString('en-GB');
+  const SVGNS = 'http://www.w3.org/2000/svg';
 
   /* ---------- London date and time ---------- */
   const fmtParts = new Intl.DateTimeFormat('en-GB', { timeZone: TZ, hourCycle: 'h23', hour: '2-digit', minute: '2-digit' });
   function londonToday() { return new Date().toLocaleDateString('en-CA', { timeZone: TZ }); }
-  function londonHour() {                       // decimal hours, e.g. 14.5 = 14:30
+  function londonMinutes() {                    // minutes since midnight, London, e.g. 14:30 = 870
     const p = Object.fromEntries(fmtParts.formatToParts(new Date()).map(x => [x.type, x.value]));
-    return (+p.hour) + (+p.minute) / 60;
+    return (+p.hour) * 60 + (+p.minute);
   }
+  // Test hook: ?now=HH:MM shows the page as if it were that time of day (today's date, clock stopped). It does
+  // nothing unless the address explicitly carries it, and only changes what is shown, never what is fetched.
+  const FAKE_NOW = (() => {
+    const m = /^(\d{1,2}):(\d{2})$/.exec(new URLSearchParams(location.search).get('now') || '');
+    return m && +m[1] < 24 && +m[2] < 60 ? +m[1] * 60 + +m[2] : null;
+  })();
+  const nowMin = () => FAKE_NOW ?? londonMinutes();
   const dayNum = ymd => Date.UTC(+ymd.slice(0, 4), +ymd.slice(5, 7) - 1, +ymd.slice(8, 10)) / 86400000;
-  function hm(h) {                              // 18.5 -> "18:30"
-    const m = Math.round(h * 60);
-    return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0');
-  }
+  const addDays = (ymd, n) => new Date((dayNum(ymd) + n) * 86400000).toISOString().slice(0, 10);
+  const fmtDay = (ymd, o) => new Date(dayNum(ymd) * 86400000).toLocaleDateString('en-GB', { ...o, timeZone: 'UTC' });
+  const hm = m => { m = Math.round(m) % 1440; return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); };   // 1110 -> "18:30" (24:00 shows as 00:00, like the Planner)
   const clock = ms => new Date(ms).toLocaleTimeString('en-GB', { timeZone: TZ, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+  const inWords = m => m < 60 ? `${m} min` : (m % 60 ? `${Math.floor(m / 60)} h ${m % 60} min` : `${m / 60} h`);
+  const plural = (n, one, many) => `${n} ${n === 1 ? one : (many || one + 's')}`;
 
   /* ---------- storage (always guarded: private windows can throw) ---------- */
   const store = {
@@ -1019,46 +1180,61 @@ const glass = (() => {
   async function loadTodo(today) {
     const rows = await get('todo?select=doc');
     const doc = rows?.[0]?.doc || {}, dead = doc.deleted || {};
-    const done = [], late = [], due = [];
+    const lists = Object.fromEntries((doc.lists || []).filter(l => l && l.id).map(l => [String(l.id), String(l.name || '')]));
+    const open = [], later = []; let done = 0;
     for (const t of doc.tasks || []) {
       if (!t || dead['t:' + t.id] >= t.u) continue;
       if (t.done) {
-        if (t.doneAt && new Date(t.doneAt).toLocaleDateString('en-CA', { timeZone: TZ }) === today) done.push(1);
-      } else if (t.due && t.due <= today) (t.due < today ? late : due).push(1);
+        if (t.doneAt && new Date(t.doneAt).toLocaleDateString('en-CA', { timeZone: TZ }) === today) done++;
+      } else if (t.due) {
+        const o = { title: String(t.title || 'Untitled').slice(0, 200), list: lists[String(t.listId)] || '', due: String(t.due), pr: +t.priority || 0, order: +t.order || 0 };
+        (t.due <= today ? open : later).push(o);
+      }
     }
-    return { day: today, done: done.length, overdue: late.length, today: due.length, left: late.length + due.length };
+    // oldest overdue first, then today's by priority then the order in the list
+    open.sort((a, b) => (a.due < today ? 0 : 1) - (b.due < today ? 0 : 1) || (a.due < b.due ? -1 : a.due > b.due ? 1 : 0) || b.pr - a.pr || a.order - b.order);
+    later.sort((a, b) => (a.due < b.due ? -1 : a.due > b.due ? 1 : 0) || b.pr - a.pr || a.order - b.order);
+    const overdue = open.filter(t => t.due < today).length;
+    return { v: DATA_V, day: today, done, overdue, today: open.length - overdue, left: open.length, tasks: open.slice(0, 60), next: later[0] || null };
   }
   async function loadPlanner(today) {
     const rows = await get('planner?select=doc');
-    const doc = rows?.[0]?.doc || {}, dead = doc.deleted || {}, td = dayNum(today), ev = [];
-    for (const e of doc.events || []) {
-      if (!e || !e.date || e.id in dead || !Number.isFinite(+e.s) || !Number.isFinite(+e.e)) continue;
-      let hit = false;
+    const doc = rows?.[0]?.doc || {}, dead = doc.deleted || {}, tmrw = addDays(today, 1);
+    const onDay = (e, ds) => {
       if (e.repeat === 'weekly') {
-        const diff = td - dayNum(e.date);
-        hit = diff >= 0 && diff % 7 === 0 && !(e.until && today > e.until) && !(e.skip || []).includes(today);
-      } else hit = e.date === today;
-      if (hit) ev.push({ title: String(e.title || 'Untitled'), where: String(e.where || ''), s: +e.s, e: +e.e });
-    }
-    ev.sort((a, b) => a.s - b.s || a.e - b.e);
-    return { day: today, events: ev };
+        const diff = dayNum(ds) - dayNum(e.date);
+        return diff >= 0 && diff % 7 === 0 && !(e.until && ds > e.until) && !(e.skip || []).includes(ds);
+      }
+      return e.date === ds;
+    };
+    const day = ds => (doc.events || [])
+      .filter(e => e && e.date && !(e.id in dead) && Number.isFinite(+e.s) && Number.isFinite(+e.e) && onDay(e, ds))
+      .map(e => ({ title: String(e.title || 'Untitled').slice(0, 200), where: String(e.where || '').slice(0, 200), cal: String(e.cal || ''), s: Math.round(+e.s * 60), e: Math.round(+e.e * 60) }))
+      .sort((a, b) => a.s - b.s || a.e - b.e);
+    // deadlines = the Planner's tasks: open, not deleted, with a due date today or later (they carry a date, not a time)
+    const dues = (doc.tasks || [])
+      .filter(t => t && t.due && !t.done && !(t.id in dead) && t.due >= today)
+      .map(t => ({ title: String(t.title || 'Untitled').slice(0, 200), due: String(t.due), cal: String(t.cal || '') }))
+      .sort((a, b) => (a.due < b.due ? -1 : a.due > b.due ? 1 : 0) || (a.title < b.title ? -1 : 1));
+    return { v: DATA_V, day: today, events: day(today), tomorrow: day(tmrw), dues: dues.slice(0, 3) };
   }
   async function loadCalories(today) {
     const [days, settings] = await Promise.all([
-      get(`calorie_days?select=kcal,maintenance_kcal&day=eq.${today}`),
+      get(`calorie_days?select=kcal,items,maintenance_kcal&day=eq.${today}`),
       get('calorie_settings?select=maintenance_kcal'),
     ]);
-    const maint = Number(settings?.[0]?.maintenance_kcal) || DEFAULT_MAINT;
-    return { day: today, kcal: Math.round(Number(days?.[0]?.kcal) || 0), maint };
+    const maint = Number(settings?.[0]?.maintenance_kcal) || DEFAULT_MAINT, row = days?.[0];
+    const kcal = Math.round(Number(row?.kcal) || 0), items = Math.round(Number(row?.items) || 0);
+    return { v: DATA_V, day: today, kcal, maint, items, logged: !!row && (items > 0 || kcal > 0) };
   }
   const LOADERS = { todo: loadTodo, planner: loadPlanner, calories: loadCalories };
 
-  /* ---------- state: what each tile last got, and when ---------- */
+  /* ---------- state: what each source last got, and when ---------- */
   const tiles = { todo: null, planner: null, calories: null };      // {data, t}
   const failed = { todo: null, planner: null, calories: null };     // null | 'offline' | 'error'
   const cache = store.get(CACHE_KEY);
   if (cache && session && cache.uid === session.id) {
-    for (const k of Object.keys(tiles)) if (cache[k]?.data?.day === londonToday()) tiles[k] = cache[k];
+    for (const k of Object.keys(tiles)) if (cache[k]?.data?.day === londonToday() && cache[k].data.v === DATA_V) tiles[k] = cache[k];
   }
   function saveCache() {
     if (!session) return;
@@ -1067,125 +1243,238 @@ const glass = (() => {
     store.set(CACHE_KEY, o);
   }
 
-  /* ---------- painting ---------- */
-  const setText = (el, t) => { if (el && el.textContent !== t) el.textContent = t; };
-  const plural = (n, one, many) => n === 1 ? one : many;
+  /* ---------- building nodes (text only ever goes in as text) ---------- */
+  const el = (tag, cls, ...kids) => { const n = document.createElement(tag); if (cls) n.className = cls; for (const k of kids) if (k != null && k !== false && k !== '') n.append(k); return n; };
+  const ell = (text, cls = 'ag__t', lines = 1) => { const n = el('span', cls + (lines > 1 ? ' ell2' : ' ell'), text); n.title = text; return n; };   // one line with an ellipsis, or two
+  const ico = id => {
+    const s = document.createElementNS(SVGNS, 'svg'), u = document.createElementNS(SVGNS, 'use');
+    s.setAttribute('class', 'ic'); s.setAttribute('aria-hidden', 'true'); u.setAttribute('href', '#' + id); s.append(u); return s;
+  };
+  const setText = (n, t) => { if (n && n.textContent !== t) n.textContent = t; };
+  const CAL_COLOUR = { uni: 'var(--c-uni)', study: 'var(--c-projects)', life: 'var(--c-social)', health: 'var(--c-shopping)', project: 'var(--c-personal)' };
+  const calVar = c => CAL_COLOUR[c] || 'var(--c-all)';
+  const part = m => m < 720 ? 'Morning' : m < 1020 ? 'Afternoon' : 'Evening';
 
+  /* ---------- the agenda (Next up, today, tomorrow) ---------- */
+  const href = { planner: '../planner/', todo: '../todo/' };
+  const link = (cls, to, ...kids) => { const a = el('a', cls, ...kids); a.setAttribute('href', to); return a; };
+  const evRow = (e, grp) => {
+    const a = link('ag__row', href.planner, el('span', 'ag__grp', grp), el('span', 'ag__time num', hm(e.s), el('small', null, '–' + hm(e.e))),
+      el('span', 'ag__what', el('i', 'ag__bar'), ell(e.title, 'ag__t', 2)), ell(e.where, 'ag__m'), el('span', 'ag__tag'));
+    a.style.setProperty('--c', calVar(e.cal)); return a;
+  };
+  const refRow = (e, grp, current) => {
+    const a = link('ag__row ag__row--ref', href.planner, el('span', 'ag__grp', grp), el('span', 'ag__time num', hm(e.s), el('small', null, '–' + hm(e.e))),
+      el('span', 'ag__what', el('i', 'ag__bar'), ell(e.title)), el('span'), el('span', 'ag__tag', current ? 'On now ↑' : 'Up next ↑'));
+    a.style.setProperty('--c', calVar(e.cal)); return a;
+  };
+  const taskRow = (t, isLead) => link('ag__row ag__row--task' + (isLead ? ' ag__row--ref' : ''), href.todo, el('span', 'ag__grp'), el('span', 'ag__time', el('small', null, 'today')),
+    el('span', 'ag__what', el('span', 'task__tick'), ell(t.title, 'ag__t', isLead ? 1 : 2)), ell(t.list, 'ag__m'), el('span', 'ag__tag', isLead ? 'Up next ↑' : 'To Do'));
+  const gapRow = m => el('div', 'ag__row ag__row--gap', el('span'), el('span'), el('span', 'ag__t', inWords(m) + ' free'));
+  const quietRow = (grp, icon, kids, to, cls = '') => link('ag__row ag__row--quiet ' + cls, to, el('span', 'ag__grp', grp), el('span', 'ag__time'),
+    el('span', 'ag__what ag__what--wide', ico(icon), el('span', 'ag__t ell', ...kids)));
+  const dayHead = (k, main, sub) => el('h3', 'ag__dh', el('span', 'ag__k', k), el('b', null, main), el('span', null, sub));
+  // "A, B +3 more": up to two titles, fewer when they are long, so the "+N more" is never the part that gets cut
+  function names(arr, max = 2, budget = 90) {
+    let k = Math.min(max, arr.length);
+    while (k > 1 && arr.slice(0, k).join(', ').length > budget) k--;
+    return arr.slice(0, k).join(', ') + (arr.length > k ? ` +${arr.length - k} more` : '');
+  }
+
+  // events of one day (with the free gaps between them, 30 min or more) as separate items so a section can be capped
+  function eventItems(evs, lead, current) {
+    const out = []; let lastGrp = '', maxEnd = null;
+    for (const e of evs) {
+      const g = part(e.s % 1440), label = g !== lastGrp ? g : '';
+      const gap = maxEnd !== null && e.a - maxEnd >= 30 ? gapRow(e.a - maxEnd) : null;
+      const row = e === lead ? refRow(e, label, e === current) : evRow(e, label);
+      out.push({ nodes: gap ? [gap, row] : [row], grp: g, kind: 'event' });
+      lastGrp = g; maxEnd = maxEnd === null ? e.b : Math.max(maxEnd, e.b);
+    }
+    return out;
+  }
+  // the first `cap` items, then one "+N more" line for the rest
+  function capped(items, cap, to) {
+    if (items.length <= cap) return items.flatMap(x => x.nodes);
+    const rest = items.slice(cap), ev = rest.filter(x => x.kind === 'event').length, tk = rest.length - ev;
+    const what = [ev && plural(ev, 'event'), tk && plural(tk, 'task')].filter(Boolean).join(', ');
+    return [...items.slice(0, cap).flatMap(x => x.nodes), quietRow('', 'i-plus', [`+${rest.length} more${what ? ` (${what})` : ''}`], to, 'ag__row--more')];
+  }
+
+  let agenda = null;        // what the last paint built, so a resize can re-fit without rebuilding the model
+  function buildAgenda() {
+    const P = tiles.planner?.data, T = tiles.todo?.data, NOW = nowMin(), today = londonToday(), evening = NOW >= 1020;
+    const evs = P ? [...P.events.map(e => ({ ...e, day: 0 })), ...P.tomorrow.map(e => ({ ...e, day: 1 }))].map(e => ({ ...e, a: e.day * 1440 + e.s, b: e.day * 1440 + e.e })) : [];
+    const current = evs.find(e => e.a <= NOW && e.b > NOW), lead = current || evs.find(e => e.a > NOW);
+    const m = { NOW, evening, today, lead, current, P, T };
+
+    // the headline: the event on now, else the next one (today or tomorrow), else the next due task
+    const dueToday = T ? T.tasks.filter(t => t.due === today) : [], over = T ? T.tasks.filter(t => t.due < today) : [];
+    if (lead) {
+      m.nx = { to: href.planner, cal: lead.cal,
+        kicker: current ? `On now · until ${hm(lead.e)}` : `Next · ${lead.day === 0 ? 'today' : 'tomorrow'} at ${hm(lead.s)}`,
+        count: current ? 'Now' : `in ${inWords(lead.a - NOW)}`, title: lead.title,
+        meta: [`${hm(lead.s)}–${hm(lead.e)}`, lead.where].filter(Boolean).join(' · ') };
+    } else {
+      const task = dueToday[0] || over[0] || T?.next;
+      if (task) {
+        m.leadTask = task;
+        const dd = dayNum(task.due) - dayNum(today);
+        m.nx = { to: href.todo, cal: '', title: task.title,
+          kicker: dd < 0 ? 'Next task · overdue' : dd === 0 ? 'Next task · due today' : `Next task · due ${fmtDay(task.due, { weekday: 'long', day: 'numeric', month: 'long' })}`,
+          count: dd < 0 ? 'Overdue' : dd === 0 ? 'Today' : dd === 1 ? 'Tomorrow' : `in ${dd} days`,
+          meta: [task.list, dd < 0 ? `due ${fmtDay(task.due, { weekday: 'short', day: 'numeric', month: 'short' })}` : ''].filter(Boolean).join(' · ') };
+      } else m.nx = null;
+    }
+
+    // today
+    const todayEv = evs.filter(e => e.day === 0), done = todayEv.filter(e => e.b <= NOW), left = todayEv.filter(e => e.b > NOW);
+    const sub = [P && plural(left.length, 'event') + ' left', T && plural(dueToday.length, 'task') + ' due'].filter(Boolean).join(' · ');
+    const head = [dayHead(evening ? 'Tonight' : 'Today', fmtDay(today, { weekday: 'long', day: 'numeric' }), sub)];
+    if (!P) head.push(quietRow('', 'i-alert', ['Planner events aren’t available right now'], href.planner));
+    if (!T) head.push(quietRow('', 'i-alert', ['To Do tasks aren’t available right now'], href.todo));
+    if (done.length) head.push(quietRow('Earlier', 'i-check', [`${done.length} done: ${names(done.map(e => e.title))}`], href.planner, 'is-wrap'));
+    const items = eventItems(left, lead, current);
+    for (const t of dueToday) items.push({ nodes: [taskRow(t, t === m.leadTask)], kind: 'task' });
+    if (!items.length && P && T) items.push({ nodes: [quietRow('', 'i-check', ['Nothing else on today'], href.planner)], kind: 'note' });
+    const oldest = over.length ? dayNum(today) - dayNum(over[0].due) : 0;
+    const tail = over.length ? quietRow('', 'i-turn', [el('b', null, `${over.length} carried over`), `, oldest ${plural(oldest, 'day')}: ${names(over.map(t => t.title))}`], href.todo, 'is-wrap') : null;
+    m.today = { head, items, tail };
+
+    // tomorrow: its events only
+    const tm = evs.filter(e => e.day === 1), tday = addDays(today, 1);
+    const first = tm[0];
+    m.tmrw = P ? {
+      head: dayHead('Tomorrow', fmtDay(tday, { weekday: 'long', day: 'numeric', month: 'long' }), first ? `${plural(tm.length, 'event')} · first at ${hm(first.s)}` : 'Nothing planned'),
+      items: eventItems(tm, lead, current),
+      line: quietRow('Tomorrow', 'i-chev-r', [el('b', null, fmtDay(tday, { weekday: 'long', day: 'numeric' })), first ? ` · ${plural(tm.length, 'event')}, first at ${hm(first.s)} · ${first.title}` : ' · nothing planned'], href.planner),
+    } : null;
+    return m;
+  }
+
+  // render one fitting plan: Tomorrow as a line or a block, today's rows capped or not
+  function renderAgenda(m, { short = false, capToday = Infinity, capTmrw = Infinity } = {}) {
+    $('[data-field="ag-today"]').replaceChildren(...m.today.head, ...capped(m.today.items, capToday, href.planner), ...(m.today.tail ? [m.today.tail] : []));
+    const t = $('[data-field="ag-tmrw"]');
+    t.classList.toggle('is-short', short && !!m.tmrw);
+    t.hidden = !m.tmrw;
+    t.replaceChildren(...(m.tmrw ? (short ? [m.tmrw.line] : [m.tmrw.head, ...capped(m.tmrw.items, capTmrw, href.planner)]) : []));
+  }
+
+  /* Fit one screen at any time of day, never clipping a row. Daytime: Tomorrow folds to one line first, then today's
+     rows cap with "+N more". Evening: Tomorrow keeps its full block; today caps first. */
+  const deskMQ = matchMedia('(min-width: 1180px) and (min-height: 680px)');
+  function fitAgenda(m) {
+    const panel = $('.agenda'), n = m.today.items.length, k = m.tmrw ? m.tmrw.items.length : 0;
+    const fits = () => panel.scrollHeight <= panel.clientHeight + 1;
+    const plans = [{}];
+    if (deskMQ.matches) {
+      const capsToday = Array.from({ length: n }, (_, i) => n - 1 - i);
+      if (!m.evening) plans.push({ short: true }, ...capsToday.map(c => ({ short: true, capToday: c })));
+      else plans.push(...capsToday.map(c => ({ capToday: c })), ...Array.from({ length: k }, (_, i) => ({ capToday: 0, capTmrw: k - 1 - i })), { capToday: 0, short: true });
+    }
+    for (const p of plans) { renderAgenda(m, p); if (!deskMQ.matches || fits()) return; }
+  }
+
+  function paintAgenda() {
+    const panel = $('.agenda'), nx = field(panel, 'nx');
+    const so = (kicker, title, sub, btn) => {
+      panel.dataset.state = 'so';
+      setText(field(panel, 'so-kicker'), kicker); setText(field(panel, 'so-title'), title); setText(field(panel, 'so-sub'), sub);
+      field(panel, 'so-btn').hidden = !btn; agenda = null;
+      setText(field(panel, 'ag-sub'), '');
+    };
+    if (!session) return so('Home', 'Sign in to see today', 'Your next event, today’s tasks and tomorrow, from the same account as the Planner. Home only reads.', true);
+    if (!tiles.planner && !tiles.todo) {
+      if (failed.planner === 'offline' || failed.todo === 'offline') return so('Offline', 'Today isn’t available offline yet', 'Reconnect and it will fill in. Nothing here is ever changed from this page.', false);
+      if (failed.planner || failed.todo) return so('Home', 'Couldn’t load today', 'It will try again in a few minutes.', false);
+      return so('Home', 'Loading today', '', false);
+    }
+    panel.dataset.state = 'ready';
+    const m = agenda = buildAgenda();
+    setText(field(panel, 'ag-sub'), m.evening ? 'Next up, rest of today, then tomorrow' : 'Next up, today and tomorrow');
+    nx.setAttribute('href', m.nx ? m.nx.to : href.planner);
+    const count = field(panel, 'nx-count'), what = $('.nx__what', panel);
+    if (m.nx) {
+      setText(field(panel, 'nx-kicker'), m.nx.kicker); setText(count, m.nx.count); setText(field(panel, 'nx-title'), m.nx.title);
+      field(panel, 'nx-title').title = m.nx.title;
+      const meta = field(panel, 'nx-meta'); meta.replaceChildren(...(m.nx.cal !== undefined && m.nx.to === href.planner ? [(() => { const d = el('span', 'cdot'); d.style.setProperty('--c', calVar(m.nx.cal)); return d; })()] : []), el('span', null, m.nx.meta));
+      what.hidden = false;
+      count.className = 'nx__count' + (m.nx.count.length > 9 ? ' is-long' : '') + (/^[A-Za-z]{5,}$/.test(m.nx.count) && m.nx.count.length > 6 ? ' is-word' : '');
+      nx.setAttribute('aria-label', `Next up: ${m.nx.count}, ${m.nx.title}`);
+    } else {
+      setText(field(panel, 'nx-kicker'), 'Next'); setText(count, 'Nothing planned'); count.className = 'nx__count is-word'; what.hidden = true;
+      nx.setAttribute('aria-label', 'Next up: nothing planned');
+    }
+    fitAgenda(m);
+  }
+
+  /* ---------- header, tiles, Dock ---------- */
+  function paintHeader() {
+    const NOW = nowMin(), evening = NOW >= 1020, today = londonToday();
+    const date = field(document, 'date');
+    setText(date, fmtDay(today, { weekday: 'long', day: 'numeric', month: 'long' })); date.setAttribute('datetime', today);
+    setText(field(document, 'hello'), `Good ${NOW < 720 ? 'morning' : evening ? 'evening' : 'afternoon'}${session ? ', Jamie' : ''}`);
+    setText(field(document, 'mode-text'), evening ? 'Evening: wrap up today, plan tomorrow' : NOW < 720 ? 'Morning: today’s plan' : 'Afternoon: what’s left today');
+    field(document, 'mode-icon').setAttribute('href', evening ? '#i-moon' : '#i-sun');     // the moon is for the evening pill only
+  }
+  const big = (node, n, unit) => node.replaceChildren(String(n), ...(unit ? [el('small', null, unit)] : []));
   function dock(name, label, badge) {
     const a = $(`[data-dock="${name}"]`); if (!a) return;
     a.setAttribute('aria-label', label);
     const b = $('.dock__badge', a);
     if (b) { setText(b, badge ? String(badge) : ''); b.hidden = !badge; }
   }
-
   function paintTodo() {
-    const x = tiles.todo?.data, sum = field('todo', 'summary');
-    if (!x) { setText(field('todo', 'count'), '–'); setText(sum, failed.todo ? 'To Do: couldn’t load today’s numbers.' : 'To Do: loading today.'); dock('todo', 'To Do', 0); return; }
-    setText(field('todo', 'count'), String(x.left));
-    setText(field('todo', 'unit'), 'left today');
-    // slots: done today first, then overdue, then due today; capped with a +N
-    const kinds = [...Array(x.done).fill('done'), ...Array(x.overdue).fill('late'), ...Array(x.today).fill('open')];
-    const strip = field('todo', 'slots'), shown = kinds.length > SLOT_CAP ? kinds.slice(0, SLOT_CAP - 1) : kinds;
-    strip.replaceChildren(...shown.map(k => slot(k)));
-    if (kinds.length > SLOT_CAP) { const m = document.createElement('span'); m.className = 'slot slot--more'; m.textContent = '+' + (kinds.length - shown.length); strip.append(m); }
-    strip.hidden = !kinds.length;
-    const key = field('todo', 'key'), parts = [];
-    if (x.done) parts.push(document.createTextNode(`${x.done} done`));
-    if (x.today) parts.push(document.createTextNode(`${x.today} today`));
-    if (x.overdue) { const l = document.createElement('span'); l.className = 'slots__late'; l.textContent = `${x.overdue} overdue`; parts.push(l); }
-    key.replaceChildren();
-    if (!parts.length) key.textContent = 'Nothing due today';
-    else parts.forEach((p, i) => { if (i) key.append(' · '); key.append(p); });
-    let s = x.left ? `To Do: ${x.left} left today${x.overdue ? `, ${x.overdue} of them overdue` : ''}.` : 'To Do: nothing left today.';
-    if (x.done) s += ` ${x.done} done today.`;
-    setText(sum, s);
-    dock('todo', x.left ? `To Do, ${x.left} due today` : 'To Do', x.left);
+    const x = tiles.todo?.data, tile = $('[data-tile="todo"]');
+    if (!x) { big(field(tile, 'big'), '–'); setText(field(tile, 'sub'), failed.todo ? 'Couldn’t load tasks' : 'Loading'); tile.setAttribute('aria-label', 'To Do: tasks left'); dock('todo', 'To Do', 0); return; }
+    big(field(tile, 'big'), x.left, x.left === 1 ? 'task' : 'tasks');
+    setText(field(tile, 'sub'), x.left ? `${x.today} due today · ${x.overdue} carried over` : 'Nothing due today');
+    tile.setAttribute('aria-label', `To Do: ${plural(x.left, 'task')} left, ${x.today} due today, ${x.overdue} carried over`);
+    dock('todo', x.left ? `To Do, ${x.left} due today or overdue` : 'To Do', x.left);
   }
-  const SVG = 'http://www.w3.org/2000/svg';
-  function slot(kind) {
-    const el = document.createElement('span'); el.className = 'slot' + (kind === 'done' ? ' slot--done' : kind === 'late' ? ' slot--late' : '');
-    if (kind === 'open') return el;
-    const svg = document.createElementNS(SVG, 'svg'); svg.setAttribute('class', 'ic'); svg.setAttribute('viewBox', '0 0 24 24');
-    const path = document.createElementNS(SVG, 'path');
-    if (kind === 'done') path.setAttribute('d', 'M5.5 12.5l4.2 4.2 8.8-9.4');
-    else {
-      path.setAttribute('d', 'M12 5.5v8.2');
-      const dot = document.createElementNS(SVG, 'circle'); dot.setAttribute('cx', 12); dot.setAttribute('cy', 18); dot.setAttribute('r', 1.3); dot.setAttribute('fill', 'currentColor'); dot.setAttribute('stroke', 'none');
-      svg.append(path, dot); el.append(svg); return el;
-    }
-    svg.append(path); el.append(svg); return el;
-  }
-
-  const WIN_S = 8, WIN_E = 22;                       // the strip shows 08:00 to 22:00
-  const frac = h => Math.min(1, Math.max(0, (h - WIN_S) / (WIN_E - WIN_S)));
-  function paintPlanner() {
-    const x = tiles.planner?.data, sum = field('planner', 'summary');
-    const track = field('planner', 'day'), when = field('planner', 'next-time'), title = field('planner', 'next-title'), place = field('planner', 'next-place');
-    if (!x) {
-      setText(field('planner', 'count'), '–'); setText(sum, failed.planner ? 'Planner: couldn’t load today’s numbers.' : 'Planner: loading today.');
-      track.replaceChildren(); setText(when, '–'); title.hidden = place.hidden = true; dock('planner', 'Planner', 0); return;
-    }
-    const n = x.events.length, h = londonHour();
-    setText(field('planner', 'count'), String(n));
-    setText(field('planner', 'unit'), plural(n, 'event today', 'events today'));
-    const now = x.events.find(e => e.s <= h && h < e.e), next = now || x.events.find(e => e.s > h);
-    track.replaceChildren();
-    for (const e of x.events) {
-      if (e.e <= WIN_S || e.s >= WIN_E) continue;
-      const b = document.createElement('span');
-      b.className = 'day__ev' + (e === next ? ' day__ev--next' : e.e <= h ? ' day__ev--past' : '');
-      b.style.setProperty('--s', frac(e.s).toFixed(4)); b.style.setProperty('--e', frac(e.e).toFixed(4));
-      track.append(b);
-    }
-    if (h >= WIN_S && h <= WIN_E) { const l = document.createElement('span'); l.className = 'day__now'; l.style.setProperty('--t', frac(h).toFixed(4)); track.append(l); }
-    if (next) {
-      setText(when, now ? `Now · ${hm(next.s)}–${hm(next.e)}` : `Next · ${hm(next.s)}`);
-      setText(title, next.title); title.hidden = false;
-      setText(place, next.where); place.hidden = !next.where;
-    } else {
-      setText(when, n ? 'Nothing else today' : 'Nothing on today'); title.hidden = place.hidden = true;
-    }
-    let s = n ? `Planner: ${n} ${plural(n, 'event', 'events')} today.` : 'Planner: nothing on today.';
-    if (next) s += ` ${now ? 'Now' : 'Next at ' + hm(next.s) + ','}${now ? ': ' : ' '}${next.title}${next.where ? ', ' + next.where : ''}.`;
-    else if (n) s += ' Nothing else today.';
-    setText(sum, s);
-    dock('planner', n ? `Planner, ${n} ${plural(n, 'event', 'events')} today` : 'Planner', n);
-  }
-
   function paintCalories() {
-    const x = tiles.calories?.data, sum = field('calories', 'summary'), ring = field('calories', 'ring');
-    if (!x) {
-      setText(field('calories', 'eaten'), '–'); setText(field('calories', 'left'), '–'); setText(field('calories', 'goal'), '–');
-      ring.style.opacity = '0'; ring.setAttribute('stroke-dasharray', '0 100'); setText(sum, failed.calories ? 'Calories: couldn’t load today’s numbers.' : 'Calories: loading today.'); dock('calories', 'Calories', 0); return;
+    const x = tiles.calories?.data, tile = $('[data-tile="calories"]'), bar = field(tile, 'bar'), name = field(tile, 'name');
+    if (!x) { setText(name, 'Calories left'); big(field(tile, 'big'), '–'); bar.style.width = '0%'; setText(field(tile, 'sub'), failed.calories ? 'Couldn’t load calories' : 'Loading'); tile.setAttribute('aria-label', 'Calories: kcal left'); dock('calories', 'Calories', 0); return; }
+    if (!x.logged) {
+      setText(name, 'Calories left'); big(field(tile, 'big'), num(x.maint), 'kcal'); bar.style.width = '0%';
+      setText(field(tile, 'sub'), 'Nothing logged yet');
+      tile.setAttribute('aria-label', `Calories: nothing logged yet, ${num(x.maint)} kcal maintenance`);
+      dock('calories', 'Calories', 0); return;
     }
-    const left = x.maint - x.kcal, over = left < 0, pct = Math.min(100, x.kcal / x.maint * 100);
-    setText(field('calories', 'eaten'), num(x.kcal));
-    setText(field('calories', 'left'), num(Math.abs(left)));
-    setText(field('calories', 'left-label'), over ? 'kcal over' : 'kcal left');
-    setText(field('calories', 'goal'), num(x.maint));
-    ring.setAttribute('stroke-dasharray', `${pct.toFixed(2)} 100`);
-    ring.style.opacity = x.kcal > 0 ? '' : '0';
-    ring.classList.toggle('is-over', over);
-    field('calories', 'left').classList.toggle('is-over', over);
-    const gap = over ? `${num(-left)} kcal over ${num(x.maint)} maintenance` : `${num(left)} left of ${num(x.maint)} maintenance`;
-    setText(sum, `Calories: ${num(x.kcal)} kcal so far today, ${gap}.`);
-    dock('calories', over ? `Calories, ${num(-left)} kcal over` : `Calories, ${num(left)} kcal left`, 0);
+    const left = x.maint - x.kcal, over = left < 0;       // over maintenance is just a different number, never an alarm
+    setText(name, over ? 'Calories over' : 'Calories left'); big(field(tile, 'big'), num(Math.abs(left)), 'kcal');
+    bar.style.width = Math.min(100, x.kcal / x.maint * 100).toFixed(1) + '%';
+    setText(field(tile, 'sub'), `${num(x.kcal)} of ${num(x.maint)} eaten${x.items ? ' · ' + plural(x.items, 'item') : ''}`);
+    tile.setAttribute('aria-label', `Calories: ${num(x.kcal)} of ${num(x.maint)} kcal eaten, ${num(Math.abs(left))} kcal ${over ? 'over' : 'left'}`);
+    dock('calories', `Calories, ${num(Math.abs(left))} kcal ${over ? 'over' : 'left'}`, 0);
   }
-
-  function paintDate() {
-    const el = $('[data-field="date"]'), today = londonToday();
-    setText(el, new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', timeZone: TZ }).replace(',', ''));
-    el.setAttribute('datetime', today);
+  function paintDeadline() {
+    const x = tiles.planner?.data, tile = $('[data-tile="planner"]'), t = field(tile, 'title'), sub = field(tile, 'sub');
+    if (!x) { big(field(tile, 'big'), '–'); setText(t, ''); setText(sub, failed.planner ? 'Couldn’t load the Planner' : 'Loading'); tile.setAttribute('aria-label', 'Planner: next deadline'); dock('planner', 'Planner', 0); return; }
+    const today = x.day, d = x.dues || [], n = d[0];
+    if (!n) { big(field(tile, 'big'), 'None'); setText(t, 'No deadlines coming up'); t.title = ''; setText(sub, 'Nothing due in the Planner'); tile.setAttribute('aria-label', 'Planner: no deadlines coming up'); dock('planner', 'Planner', 0); return; }
+    const dd = o => dayNum(o.due) - dayNum(today);
+    const short = o => dd(o) < 7 ? fmtDay(o.due, { weekday: 'short' }) : fmtDay(o.due, { day: 'numeric', month: 'short' });
+    const label = dd(n) === 0 ? 'Today' : dd(n) === 1 ? 'Tomorrow' : short(n);
+    big(field(tile, 'big'), label, dd(n) < 7 && dd(n) > 1 ? fmtDay(n.due, { day: 'numeric', month: 'short' }) : '');
+    setText(t, n.title); t.title = n.title;
+    const when = dd(n) === 0 ? 'Due today' : dd(n) === 1 ? 'Due tomorrow' : `In ${dd(n)} days`;
+    const then = d.slice(1).map(o => `${short(o)}: ${o.title}`);
+    setText(sub, then.length ? `${when} · then ${then.join(', ')}` : when);
+    tile.setAttribute('aria-label', `Planner: next deadline ${label}, ${n.title}`);
+    dock('planner', 'Planner', 0);
   }
   function paintNote() {
-    const el = $('[data-field="sync"]'), bad = Object.keys(failed).filter(k => failed[k]);
-    if (!session || !bad.length) { el.hidden = true; return; }
+    const el_ = field(document, 'sync'), bad = Object.keys(failed).filter(k => failed[k]);
+    if (!session || !bad.length) { el_.hidden = true; return; }
     const ts = bad.map(k => tiles[k]?.t).filter(Boolean), offline = bad.some(k => failed[k] === 'offline');
     let t = offline ? 'Offline' : 'Couldn’t refresh';
     if (ts.length === bad.length) t += ` · Updated ${clock(Math.min(...ts))}`;
-    setText(el, t); el.hidden = false;
+    setText(el_, t); el_.hidden = false;
   }
-  const paintAll = () => { paintDate(); paintTodo(); paintPlanner(); paintCalories(); paintNote(); };
+  let paintedMin = -1;
+  const paintAll = () => { paintedMin = nowMin(); paintHeader(); paintAgenda(); paintTodo(); paintCalories(); paintDeadline(); paintNote(); };
 
   /* ---------- signed in / out ---------- */
   function applyAuth() {
@@ -1194,7 +1483,7 @@ const glass = (() => {
     const btn = $('[data-field="account"]'), label = out ? 'Sign in' : 'Account';
     btn.setAttribute('aria-label', label); btn.title = label;
     if (out) for (const k of Object.keys(tiles)) { tiles[k] = null; failed[k] = null; }
-    for (const k of ['todo', 'planner', 'calories']) { const a = $(`[data-dock="${k}"]`); if (a && out) { a.setAttribute('aria-label', { todo: 'To Do', planner: 'Planner', calories: 'Calories' }[k]); const b = $('.dock__badge', a); if (b) b.hidden = true; } }
+    if (out) { dock('todo', 'To Do', 0); dock('calories', 'Calories', 0); dock('planner', 'Planner', 0); }
     paintAll();
   }
 
@@ -1215,21 +1504,23 @@ const glass = (() => {
         if (e.signedOut) return;
         failed[k] = e.offline ? 'offline' : 'error';
       }
-      ({ todo: paintTodo, planner: paintPlanner, calories: paintCalories })[k]();
-    })).then(() => { if (session) { saveCache(); paintDate(); paintNote(); } }).finally(() => { running = null; });
+    })).then(() => { if (session) { saveCache(); paintAll(); } }).finally(() => { running = null; });
     return running;
   }
   const visible = () => document.visibilityState === 'visible';
   document.addEventListener('visibilitychange', () => { if (visible()) refresh(); });
   addEventListener('focus', () => refresh());
   setInterval(() => { if (visible()) refresh(true); }, 5 * 60 * 1000);
-  // the now line and "Now / Next" move on without a fetch; a new London day triggers a fetch
+  // "now" moves on without a fetch; a new London day triggers a fetch
   let paintedDay = londonToday();
   setInterval(() => {
     if (!visible()) return;
     if (londonToday() !== paintedDay) { paintedDay = londonToday(); for (const k of Object.keys(tiles)) tiles[k] = null; paintAll(); refresh(true); }
-    else if (session) { paintPlanner(); paintDate(); }
-  }, 30000);
+    else if (nowMin() !== paintedMin) paintAll();
+  }, 20000);
+  let fitT = 0;
+  addEventListener('resize', () => { clearTimeout(fitT); fitT = setTimeout(() => { if (agenda) fitAgenda(agenda); }, 100); });
+  document.fonts?.ready.then(() => { if (agenda) fitAgenda(agenda); });
   // another tab signed in, refreshed or signed out
   addEventListener('storage', e => {
     if (e.key !== SESSION_KEY) return;
@@ -1258,8 +1549,9 @@ const glass = (() => {
     if (act === 'signout') { signedOutLocally(); closeSheet(); }
   });
   $('[data-field="account"]').addEventListener('click', openSheet);
-  // signed out: a tap on a tile opens the sheet instead of leaving the page. The Dock always opens the apps.
-  document.querySelectorAll('.w[data-tile]').forEach(a => a.addEventListener('click', e => { if (!session) { e.preventDefault(); openSheet(); } }));
+  // signed out: a tap on a tile (or the Sign in button) opens the sheet instead of leaving the page. The Dock always opens the apps.
+  document.querySelectorAll('.cc[data-tile]').forEach(a => a.addEventListener('click', e => { if (!session) { e.preventDefault(); openSheet(); } }));
+  $('[data-act="open-sheet"]').addEventListener('click', openSheet);
 
   form.addEventListener('submit', async e => {
     e.preventDefault();
