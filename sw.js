@@ -2,7 +2,7 @@
 // away, with the cached copy as a fallback when there's no signal. This folder's icons are cache-first.
 // Supabase requests and anything that isn't a GET are never touched, and neither is any page outside this
 // folder: the Dock links to ../todo/, ../calories/ and ../planner/, which belong to other apps.
-const CACHE = 'home-v3';   // bumped when the dashboard replaced the three widgets (same file list)
+const CACHE = 'home-v4';   // bumped when the dashboard replaced the three widgets (same file list)
 const SHELL = ['./', './index.html', './back.js', './manifest.webmanifest',
   './icons/home-icon-192.png', './icons/home-icon-512.png', './icons/home-apple-touch-icon.png', './icons/home-favicon-32.png',
   './icons/todo.png', './icons/calories.png', './icons/planner.png'];
