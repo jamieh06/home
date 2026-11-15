@@ -2,13 +2,14 @@
 // away, with the cached copy as a fallback when there's no signal. This folder's icons are cache-first.
 // Supabase requests and anything that isn't a GET are never touched, and neither is any page outside this
 // folder: the Dock links to ../todo/, ../calories/ and ../planner/, which belong to other apps.
-const CACHE = 'home-v4';   // bumped when the dashboard replaced the three widgets (same file list)
+const CACHE = 'home-v5';   // bump when any file below changes
 const SHELL = ['./', './index.html', './back.js', './manifest.webmanifest',
   './icons/home-icon-192.png', './icons/home-icon-512.png', './icons/home-apple-touch-icon.png', './icons/home-favicon-32.png',
-  './icons/todo.png', './icons/calories.png', './icons/planner.png'];
+  './icons/todo.png', './icons/calories.png', './icons/planner.png?v=2'];   // ?v= changes when an app's icon changes
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
+  // cache: 'reload' skips the browser's own HTTP cache (GitHub Pages keeps files 10 min), so a new version never re-saves old files
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL.map(u => new Request(u, { cache: 'reload' })))).then(() => self.skipWaiting()));
 });
 self.addEventListener('activate', e => {
   e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim()));
