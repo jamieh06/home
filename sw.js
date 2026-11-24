@@ -1,11 +1,11 @@
 // Offline support for the Home page only. The page is fetched network-first so updates show up straight
 // away, with the cached copy as a fallback when there's no signal. This folder's icons are cache-first.
 // Supabase requests and anything that isn't a GET are never touched, and neither is any page outside this
-// folder: the Dock links to ../todo/, ../calories/ and ../planner/, which belong to other apps.
-const CACHE = 'home-v5';   // bump when any file below changes
+// folder: the Dock links to ../todo/, ../calories/ and ../planner/, which belong to other apps (and to a claude.ai page, which opens in a new tab).
+const CACHE = 'home-v6';   // bump when any file below changes
 const SHELL = ['./', './index.html', './back.js', './manifest.webmanifest',
   './icons/home-icon-192.png', './icons/home-icon-512.png', './icons/home-apple-touch-icon.png', './icons/home-favicon-32.png',
-  './icons/todo.png', './icons/calories.png', './icons/planner.png?v=2'];   // ?v= changes when an app's icon changes
+  './icons/todo.png', './icons/calories.png', './icons/planner.png?v=2', './icons/careers.png'];   // ?v= changes when an app's icon changes
 
 self.addEventListener('install', e => {
   // cache: 'reload' skips the browser's own HTTP cache (GitHub Pages keeps files 10 min), so a new version never re-saves old files
